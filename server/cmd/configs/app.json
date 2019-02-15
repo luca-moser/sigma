@@ -1,0 +1,30 @@
+{
+  "name": "app",
+  "dev": true,
+  "verbose": true,
+  "account": {
+    "mwm": 14,
+    "gtta_depth": 3,
+    "security_level": 2,
+    "transfer_poll_interval": 5,
+    "promote_reattach_interval": 30,
+    "address_validity_timeout_days": 3,
+    "node": "https://node-x.iota-tangle.io:14268",
+    "ntp_server": "time.google.com"
+  },
+  "mongo": {
+    "uri": "mongodb://localhost:27017",
+    "dbname": "sigma",
+    "collname": "accounts"
+  },
+  "http": {
+    "domain": "example.com",
+    "address": "0.0.0.0:9000",
+    "assets": {
+      "static": "../../client",
+      "favicon": "../../client/img/favicon.ico",
+      "html": "../../client/html"
+    },
+    "logRequests": false
+  }
+}
