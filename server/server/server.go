@@ -76,7 +76,7 @@ func (server *Server) Start() {
 
 	// create routers
 	indexRouter := &routers.IndexRouter{}
-	accRouter := &routers.AccRouter{}
+	accRouter := &routers.SendStreamRouter{}
 	rters := []routers.Router{indexRouter, accRouter}
 
 	// create injection graph for automatic dependency injection

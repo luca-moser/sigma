@@ -25,7 +25,7 @@ export class BalanceStore {
             let msg: Message = JSON.parse(e.data);
             switch (msg.type) {
                 case RecType.Balance:
-                    this.updateBalance(msg.payload);
+                    this.updateBalance(msg.data);
                     break;
                 default:
             }

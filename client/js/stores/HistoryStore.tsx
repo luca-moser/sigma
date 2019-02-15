@@ -4,7 +4,7 @@ import {Message} from "../misc/Message";
 
 enum RecType {
     Init,
-    Add
+    NewHistoryItem
 }
 
 enum HistoryItemType {
@@ -24,9 +24,9 @@ export let itemTypeToString = new Map([
 class HistoryItem {
     tail: string;
     bundle: string;
-    type: HistoryItemType;
     amount: number;
     date: string;
+    type: HistoryItemType;
 }
 
 export class HistoryStore {
@@ -42,10 +42,10 @@ export class HistoryStore {
             let msg: Message = JSON.parse(e.data);
             switch (msg.type) {
                 case RecType.Init:
-                    this.resetItems(msg.payload);
+                    this.resetItems(msg.data);
                     break;
-                case RecType.Add:
-                    this.addItem(msg.payload);
+                case RecType.NewHistoryItem:
+                    this.addItem(msg.data);
                     break;
                 default:
             }

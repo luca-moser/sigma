@@ -7,8 +7,12 @@ enum RecType {
     Add
 }
 
+enum ReqType {
+    Send
+}
+
 class Address {
-    hash: string;
+    address: string;
     timeout: string;
     multi_use: boolean;
     expected_amount: boolean;
@@ -27,10 +31,10 @@ export class AddressesStore {
             let msg: Message = JSON.parse(e.data);
             switch (msg.type) {
                 case RecType.Init:
-                    this.resetItems(msg.payload);
+                    this.resetItems(msg.data);
                     break;
                 case RecType.Add:
-                    this.addItem(msg.payload);
+                    this.addItem(msg.data);
                     break;
                 default:
             }
@@ -38,13 +42,13 @@ export class AddressesStore {
     }
 
     addItem = (addr: Address) => {
-        this.addrs.set(addr.hash, addr);
+        this.addrs.set(addr.address, addr);
     }
 
     resetItems = (addrs: Array<Address>) => {
         let map = new Map();
         addrs.forEach(addr => {
-            map.set(addr.hash, addr);
+            map.set(addr.address, addr);
         });
         this.addrs = observable.map(map);
     }
