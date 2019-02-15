@@ -12,10 +12,7 @@ import List from '@material-ui/core/List';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import ScheduleOutlined from '@material-ui/icons/ScheduleOutlined';
-import HelpOutline from '@material-ui/icons/HelpOutline';
 import {default as dateformat} from 'dateformat';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
 
 const styles = createStyles({
     button: {
@@ -39,7 +36,7 @@ interface Props {
 class addresses extends React.Component<Props, {}> {
     render() {
         let {classes} = this.props;
-        let {amount} = this.props.addrsStore;
+        let {addrs} = this.props.addrsStore;
         let now = dateformat(new Date(), "dd.mm.yyyy HH:MM:ss");
         return (
             <div>

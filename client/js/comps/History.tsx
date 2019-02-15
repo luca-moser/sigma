@@ -6,11 +6,11 @@ import Typography from '@material-ui/core/Typography';
 import SvgIcon from '@material-ui/core/SvgIcon';
 import ChevronLeftOutlined from '@material-ui/icons/ChevronLeftOutlined';
 import ChevronRightOutlined from '@material-ui/icons/ChevronRightOutlined';
-import {AddressesStore} from "../stores/AddressesStore";
 import ListItem from '@material-ui/core/ListItem';
 import List from '@material-ui/core/List';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import {HistoryStore} from "../stores/HistoryStore";
 
 const styles = createStyles({
     button: {
@@ -27,17 +27,17 @@ const styles = createStyles({
 
 interface Props {
     appStore?: ApplicationStore;
-    addrsStore?: AddressesStore;
+    historyStore?: HistoryStore;
     classes?: any;
 }
 
 @inject("appStore")
-@inject("addrsStore")
+@inject("historyStore")
 @observer
 class history extends React.Component<Props, {}> {
     render() {
         let {classes} = this.props;
-        let {amount} = this.props.addrsStore;
+        let {items} = this.props.historyStore;
         return (
             <div>
                 <Typography variant="h5" gutterBottom>
