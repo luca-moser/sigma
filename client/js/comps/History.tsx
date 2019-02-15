@@ -18,11 +18,11 @@ const styles = createStyles({
         marginBottom: 20,
     },
     receive: {
-        color: "#22e87f",
+        color: "#008040",
     },
     sent: {
         color: "#e6096a",
-    }
+    },
 });
 
 interface Props {
@@ -44,13 +44,19 @@ class history extends React.Component<Props, {}> {
                     History
                 </Typography>
                 <List>
-                    <ListItem disableGutters button className={classes.receive}  dense>
+                    <ListItem disableGutters button className={classes.receive} dense>
                         <ListItemIcon><SvgIcon><ChevronLeftOutlined/></SvgIcon></ListItemIcon>
-                        <ListItemText primary="+100i | DJNLCKBULVLHTOBRUIPBVRKTKFOEHEXIN9YF..." secondary="receive"/>
+                        <ListItemText classes={{
+                            primary: classes.receive,
+                            secondary: classes.receive
+                        }} primary="+100i | DJNLCKBULVLHTOBRUIPBVRKTKFOEHEXIN9YF..." secondary="receive"/>
                     </ListItem>
                     <ListItem disableGutters button className={classes.sent} dense>
                         <ListItemIcon><SvgIcon><ChevronRightOutlined/></SvgIcon></ListItemIcon>
-                        <ListItemText primary="-50i | OPLKPFEXLRGAGKUFYUPXJPULHHNKEL9SDFYLW..." secondary="sent"/>
+                        <ListItemText classes={{
+                            primary: classes.sent,
+                            secondary: classes.sent
+                        }} primary="-50i | OPLKPFEXLRGAGKUFYUPXJPULHHNKEL9SDFYLW..." secondary="sent"/>
                     </ListItem>
                 </List>
             </div>

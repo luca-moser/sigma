@@ -1,11 +1,67 @@
-import {action, observable} from 'mobx';
+import {observable} from 'mobx';
+import {createWebSocket} from "../misc/Utils";
+import {Message} from "../misc/Message";
+
+enum RecType {
+    Init,
+    Add
+}
+
+enum HistoryItemType {
+    Receiving = 0,
+    Received,
+    Sending,
+    Sent,
+}
+
+export let itemTypeToString = new Map([
+    [HistoryItemType.Receiving, "receiving"],
+    [HistoryItemType.Received, "received"],
+    [HistoryItemType.Sending, "sending"],
+    [HistoryItemType.Sent, "sent"],
+]);
+
+class HistoryItem {
+    tail: string;
+    bundle: string;
+    type: HistoryItemType;
+    amount: number;
+    date: string;
+}
 
 export class HistoryStore {
-    @observable amount: number = 0;
+    @observable items = new Map();
 
-    @action
-    updateAmount = (amount: number) => {
-        this.amount = amount;
+    constructor() {
+        this.connect();
+    }
+
+    connect() {
+        let ws = createWebSocket("/stream/history");
+        ws.onmessage = (e: MessageEvent) => {
+            let msg: Message = JSON.parse(e.data);
+            switch (msg.type) {
+                case RecType.Init:
+                    this.resetItems(msg.payload);
+                    break;
+                case RecType.Add:
+                    this.addItem(msg.payload);
+                    break;
+                default:
+            }
+        };
+    }
+
+    addItem = (item: HistoryItem) => {
+        this.items.set(item.tail, item);
+    }
+
+    resetItems = (items: Array<HistoryItem>) => {
+        let map = new Map();
+        items.forEach(item => {
+            map.set(item.tail, item);
+        });
+        this.items = observable.map(map);
     }
 
 }

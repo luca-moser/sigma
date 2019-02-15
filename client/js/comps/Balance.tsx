@@ -19,17 +19,17 @@ interface Props {
 class balance extends React.Component<Props, {}> {
     render() {
         let {classes} = this.props;
-        let {avail_balance, total_balance} = this.props.balStore;
+        let {available, total} = this.props.balStore;
         return (
             <div>
                 <Typography variant="h5" gutterBottom>
                     Balance
                 </Typography>
                 <Typography variant="subtitle1">
-                    Available balance: {avail_balance} iotas
+                    Available balance: {available} iotas
                 </Typography>
                 <Typography variant="subtitle1">
-                    Total balance: {total_balance} iotas
+                    Total balance: {total} iotas
                 </Typography>
 
             </div>

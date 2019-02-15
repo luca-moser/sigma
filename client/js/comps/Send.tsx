@@ -6,15 +6,18 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Button from '@material-ui/core/Button';
-import {SendStore, unitMap} from "../stores/SendStore";
-import {default as SendIcon} from '@material-ui/icons/SendOutlined';
-import SvgIcon from '@material-ui/core/SvgIcon';
+import {FormState, SendStore, unitMap} from "../stores/SendStore";
+import LinearProgress from '@material-ui/core/LinearProgress';
+
 
 const styles = createStyles({
     button: {
         marginTop: 50,
         width: 200
     },
+    progressBar: {
+        marginTop: 20
+    }
 });
 
 interface Props {
@@ -37,13 +40,12 @@ class send extends React.Component<Props, {}> {
     }
 
     updateDest = (e) => {
-        this.props.sendStore.updateDest(e.target.value);
+        this.props.sendStore.updateLink(e.target.value);
     }
 
     render() {
         let {classes} = this.props;
-        let {unit, amount, dest} = this.props.sendStore;
-
+        let {unit, amount, link, form_state, sending} = this.props.sendStore;
         return (
             <div>
                 <Typography variant="h5" gutterBottom>
@@ -58,8 +60,8 @@ class send extends React.Component<Props, {}> {
                 <TextField
                     id="outlined-number"
                     label="Recipient Magnet-Link"
-                    value={dest}
-                    placeholder="<magnet-link>"
+                    value={link}
+                    placeholder="link"
                     onChange={this.updateDest}
                     helperText="The magnet-link of the recipient"
                     className={classes.textField}
@@ -104,9 +106,12 @@ class send extends React.Component<Props, {}> {
                     fullWidth
                 />
 
-                <Button variant="outlined" color="primary" className={classes.button}>
+                <Button variant="outlined" color="primary" disabled={form_state !== FormState.Ok}
+                        className={classes.button}>
                     Send
                 </Button>
+
+                {sending && <LinearProgress className={classes.progressBar}/>}
             </div>
         );
     }

@@ -47,13 +47,13 @@ class addresses extends React.Component<Props, {}> {
                     Receive
                 </Typography>
 
-                <Button variant="outlined" color="primary" className={classes.button}>
+                <Button variant="outlined" className={classes.button}>
                     Generate Address
                 </Button>
 
                 <Divider className={classes.splitDivider}/>
 
-                <Typography variant="h5" gutterBottom>
+                <Typography variant="h6" gutterBottom>
                     Deposit Addresses
                 </Typography>
 
