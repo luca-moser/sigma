@@ -1,42 +1,61 @@
 package controllers
 
 import (
+	"github.com/iotaledger/iota.go/account"
+	"github.com/iotaledger/iota.go/account/builder"
+	"github.com/iotaledger/iota.go/account/event"
+	"github.com/iotaledger/iota.go/account/plugins/promoter"
+	"github.com/iotaledger/iota.go/account/plugins/transfer/poller"
 	mongostore "github.com/iotaledger/iota.go/account/store/mongo"
 	"github.com/iotaledger/iota.go/account/timesrc"
 	"github.com/iotaledger/iota.go/api"
-	"github.com/luca-moser/donapoc/server/server/config"
-	"github.com/luca-moser/donapoc/server/utilities"
+	"github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/pow"
+	"github.com/luca-moser/sigma/server/misc"
+	"github.com/luca-moser/sigma/server/server/config"
 	"github.com/pkg/errors"
 	"gopkg.in/inconshreveable/log15.v2"
 	"net/http"
+	"sync"
 	"time"
 )
 
 type AccCtrl struct {
 	Config     *config.Configuration `inject:""`
-	iota       *api.API
-	store      *mongostore.MongoStore
-	timesource timesrc.TimeSource
+	UC         *UserCtrl             `inject:""`
+	IOTAAPI    *api.API
+	Store      *mongostore.MongoStore
+	TimeSource timesrc.TimeSource
 	logger     log15.Logger
+	loadedMu   sync.Mutex
+	loaded     map[string]AccountTuple
+}
+
+type AccountTuple struct {
+	Account      account.Account
+	EventMachine event.EventMachine
+	Settings     *account.Settings
 }
 
 func (ac *AccCtrl) Init() error {
 	var err error
-	conf := ac.Config.App
+	conf := ac.Config
 
 	// init logger
-	ac.logger, _ = utilities.GetLogger("acc")
+	ac.logger, _ = misc.GetLogger("acc")
 
 	// init api
+	_, powFunc := pow.GetFastestProofOfWorkImpl()
 	iotaAPI, err := api.ComposeAPI(api.HTTPClientSettings{
-		URI: conf.Account.Node, Client: &http.Client{Timeout: time.Duration(5) * time.Second},
+		URI: conf.Account.Node, LocalProofOfWorkFunc: powFunc,
+		Client: &http.Client{Timeout: time.Duration(5) * time.Second},
 	})
 	if err != nil {
 		return errors.Wrap(err, "unable to init IOTA API")
 	}
-	ac.iota = iotaAPI
+	ac.IOTAAPI = iotaAPI
 
-	ac.store, err = mongostore.NewMongoStore(conf.Mongo.URI, &mongostore.Config{
+	ac.Store, err = mongostore.NewMongoStore(conf.Mongo.URI, &mongostore.Config{
 		DBName: conf.Mongo.DBName, CollName: conf.Mongo.CollName,
 	})
 	if err != nil {
@@ -44,7 +63,52 @@ func (ac *AccCtrl) Init() error {
 	}
 
 	// init NTP time source
-	ac.timesource = timesrc.NewNTPTimeSource(conf.Account.NTPServer)
-
+	ac.TimeSource = timesrc.NewNTPTimeSource(conf.Account.NTPServer)
 	return nil
+}
+
+// returns the account of the given user
+func (ac *AccCtrl) Get(userID string) (*AccountTuple, error) {
+	ac.loadedMu.Lock()
+	defer ac.loadedMu.Unlock()
+	tuple, has := ac.loaded[userID]
+	if has {
+		return &tuple, nil
+	}
+
+	user, err := ac.UC.GetUserByID(userID)
+	if err != nil {
+		// TODO: wrap
+		return nil, err
+	}
+	conf := ac.Config.Account
+	em := event.NewEventMachine()
+	b := builder.NewBuilder().
+		WithSeed(user.Seed).
+		WithAPI(ac.IOTAAPI).
+		WithStore(ac.Store).
+		WithDepth(conf.GTTADepth).
+		WithMWM(conf.MWM).
+		WithSecurityLevel(consts.SecurityLevel(conf.SecurityLevel)).
+		WithEvents(em).
+		WithTimeSource(ac.TimeSource)
+
+	transferPoller := poller.NewTransferPoller(
+		b.Settings(), poller.NewPerTailReceiveEventFilter(false),
+		time.Duration(conf.TransferPollInterval)*time.Second)
+
+	promoterReattacher := promoter.NewPromoter(b.Settings(), time.Duration(conf.PromoteReattachInterval)*time.Second)
+
+	acc, err := b.Build(transferPoller, promoterReattacher)
+	if err != nil {
+		// TODO: wrap
+		return nil, err
+	}
+	if err := acc.Start(); err != nil {
+		// TODO: wrap
+		return nil, err
+	}
+	tuple = AccountTuple{acc, em, b.Settings()}
+	ac.loaded[userID] = tuple
+	return &tuple, nil
 }

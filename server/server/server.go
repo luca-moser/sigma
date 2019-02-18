@@ -1,14 +1,20 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"github.com/facebookgo/inject"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/luca-moser/donapoc/server/controllers"
-	"github.com/luca-moser/donapoc/server/routers"
-	"github.com/luca-moser/donapoc/server/server/config"
-	"github.com/luca-moser/donapoc/server/utilities"
+	"github.com/luca-moser/sigma/server/controllers"
+	"github.com/luca-moser/sigma/server/models"
+	"github.com/luca-moser/sigma/server/routers"
+	"github.com/luca-moser/sigma/server/server/config"
+	"github.com/luca-moser/sigma/server/misc"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
+	"github.com/mongodb/mongo-go-driver/mongo/readconcern"
+	"github.com/mongodb/mongo-go-driver/mongo/writeconcern"
 	"gopkg.in/mgo.v2"
 	"html/template"
 	"io"
@@ -34,14 +40,16 @@ func (server *Server) Start() {
 	start := time.Now().UnixNano()
 
 	// load config
-	configuration := config.LoadConfig()
-	server.Config = configuration
-	appConfig := server.Config.App
-	httpConfig := server.Config.App.HTTP
+	conf, err := config.LoadConfig()
+	if err != nil {
+		panic(err)
+	}
+	server.Config = conf
+	httpConfig := server.Config.HTTP
 
 	// init logger
-	utilities.Debug = appConfig.Verbose
-	logger, err := utilities.GetLogger("app")
+	misc.Debug = conf.Verbose
+	logger, err := misc.GetLogger("app")
 	if err != nil {
 		panic(err)
 	}
@@ -72,12 +80,36 @@ func (server *Server) Start() {
 	// create ctrls
 	appCtrl := &controllers.AppCtrl{}
 	accCtrl := &controllers.AccCtrl{}
-	ctrls := []controllers.Controller{appCtrl, accCtrl}
+	userCtrl := &controllers.UserCtrl{}
+	ctrls := []controllers.Controller{appCtrl, accCtrl, userCtrl}
 
 	// create routers
 	indexRouter := &routers.IndexRouter{}
 	accRouter := &routers.SendStreamRouter{}
-	rters := []routers.Router{indexRouter, accRouter}
+	userRouter := &routers.UserRouter{}
+	rters := []routers.Router{indexRouter, accRouter, userRouter}
+
+	// init mongo db conn
+	mongoClient, err := mongo.NewClientWithOptions(server.Config.Mongo.URI, []*options.ClientOptions{
+		{
+			// TODO: move to config
+			WriteConcern: writeconcern.New(writeconcern.J(true), writeconcern.WMajority(), writeconcern.WTimeout(5*time.Second)),
+			ReadConcern:  readconcern.Majority(),
+		},
+	}...)
+	mongoConnCtx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	if err := mongoClient.Connect(mongoConnCtx); err != nil {
+		panic(err)
+	}
+	if err := mongoClient.Ping(mongoConnCtx, nil); err != nil {
+		panic(err)
+	}
+
+	// jwt
+	authJWTConf := middleware.JWTConfig{
+		Claims:     &models.UserJWTClaims{},
+		SigningKey: []byte(conf.JWT.PrivateKey),
+	}
 
 	// create injection graph for automatic dependency injection
 	g := inject.Graph{}
@@ -85,13 +117,15 @@ func (server *Server) Start() {
 	// add various objects to the graph
 	if err = g.Provide(
 		&inject.Object{Value: e},
-		&inject.Object{Value: configuration},
-		&inject.Object{Value: appConfig.Dev, Name: "dev"},
+		&inject.Object{Value: mongoClient},
+		&inject.Object{Value: conf},
+		&inject.Object{Value: conf.Dev, Name: "dev"},
+		&inject.Object{Value: authJWTConf, Name: "jwt_config_user"},
 	); err != nil {
 		panic(err)
 	}
 
-	// add ctrls to graph
+	// add controllers to graph
 	for _, controller := range ctrls {
 		if err = g.Provide(&inject.Object{Value: controller}); err != nil {
 			panic(err)

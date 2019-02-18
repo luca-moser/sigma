@@ -1,0 +1,50 @@
+{{define "confirmation_code"}}
+<font size="2" face="Arial">
+    <p>
+        Hello {{.Name}}
+    </p>
+    <p>
+        Please click below to activate your Sigma account:
+    </p>
+    <p>
+        <a href="{{.URL}}">Activate my Sigma account.</a>
+    </p>
+</font>
+<div align="left">
+    <font size="2" face="Arial">Sincerely,</font><br>
+    <font size="2" face="Arial"><strong>Sigma</strong></font><br>
+</div>
+{{end}}
+
+{{define "password_reset_request"}}
+<font size="2" face="Arial">
+    <p>
+        Hello {{.Name}}
+    </p>
+    <p>
+        You have requested a password reset. Please click below to reset your password:
+    </p>
+    <p>
+        <a href="{{.URL}}">Reset my password.</a>
+    </p>
+</font>
+<div align="left">
+    <font size="2" face="Arial">Sincerely,</font><br>
+    <font size="2" face="Arial"><strong>Sigma</strong></font><br>
+</div>
+{{end}}
+
+{{define "password_reset"}}
+<font size="2" face="Arial">
+    <p>
+        Hello {{.Name}}
+    </p>
+    <p>
+        Your new password is <strong>{{.Password}}</strong>.
+    </p>
+</font>
+<div align="left">
+    <font size="2" face="Arial">Sincerely,</font><br>
+    <font size="2" face="Arial"><strong>Sigma</strong></font><br>
+</div>
+{{end}}

@@ -2,19 +2,20 @@ package routers
 
 import (
 	"github.com/gorilla/websocket"
-	"github.com/iotaledger/iota.go/account"
-	"github.com/iotaledger/iota.go/account/event"
 	"github.com/iotaledger/iota.go/account/event/listener"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/labstack/echo"
-	"github.com/luca-moser/donapoc/server/controllers"
+	"github.com/labstack/echo/middleware"
+	"github.com/luca-moser/sigma/server/controllers"
+	"github.com/luca-moser/sigma/server/models"
 	"time"
 )
 
 type BalanceStreamRouter struct {
-	WebEngine *echo.Echo           `inject:""`
+	R         *echo.Echo           `inject:""`
 	Dev       bool                 `inject:"dev"`
 	AccCtrl   *controllers.AccCtrl `inject:""`
+	JWTConfig middleware.JWTConfig `inject:"jwt_config_user"`
 }
 
 type BalanceRec byte
@@ -30,17 +31,25 @@ type balanceres struct {
 
 func (router *BalanceStreamRouter) Init() {
 
-	router.WebEngine.GET("/stream/balance", func(c echo.Context) error {
+	g := router.R.Group("/stream/balance")
+
+	g.Use(middleware.JWTWithConfig(router.JWTConfig))
+	g.Use(onlyAuth)
+	g.Use(onlyConfirmed)
+
+	g.GET("", func(c echo.Context) error {
+		claims := c.Get("claims").(*models.UserJWTClaims)
+		tuple, err := router.AccCtrl.Get(claims.UserID.Hex())
+		if err != nil {
+			return err
+		}
+
 		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			return err
 		}
 
-		// TODO: get account instance
-		var acc account.Account
-		_ = acc
-		var em event.EventMachine
-		lis := listener.NewCallbackEventListener(em)
+		lis := listener.NewCallbackEventListener(tuple.EventMachine)
 
 		ws.SetCloseHandler(func(code int, text string) error {
 			message := websocket.FormatCloseMessage(code, "")
@@ -50,11 +59,11 @@ func (router *BalanceStreamRouter) Init() {
 		})
 
 		sendBalance := func() {
-			avail, err := acc.AvailableBalance()
+			avail, err := tuple.Account.AvailableBalance()
 			if err != nil {
 				return
 			}
-			total, err := acc.TotalBalance()
+			total, err := tuple.Account.TotalBalance()
 			if err != nil {
 				return
 			}

@@ -27,16 +27,16 @@ type Router interface {
 }
 
 type IndexRouter struct {
-	WebEngine          *echo.Echo `inject:""`
-	Dev                bool       `inject:"dev"`
+	R   *echo.Echo `inject:""`
+	Dev bool       `inject:"dev"`
 }
 
 func (indexRouter *IndexRouter) Init() {
 
-	indexRouter.WebEngine.GET("/", indexRouter.indexRoute)
-	indexRouter.WebEngine.GET("*", indexRouter.indexRoute)
+	indexRouter.R.GET("/", indexRouter.indexRoute)
+	indexRouter.R.GET("*", indexRouter.indexRoute)
 
-	indexRouter.WebEngine.HTTPErrorHandler = func(err error, c echo.Context) {
+	indexRouter.R.HTTPErrorHandler = func(err error, c echo.Context) {
 		c.Logger().Error(err)
 
 		var statusCode int

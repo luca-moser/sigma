@@ -3,54 +3,35 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
-	"reflect"
-	"strings"
 )
 
 type Config interface{}
 
-var subConfigs = []Config{&AppConfig{}}
+const configLoc = "./configs/app.json"
 
-func LoadConfig() *Configuration {
-	configuration := &Configuration{}
-	refConfig := reflect.Indirect(reflect.ValueOf(configuration))
-
-	// go through each sub config, load it and init it on the main struct
-	for _, c := range subConfigs {
-		// indirect as 'c' is pointer to struct
-		ind := reflect.Indirect(reflect.ValueOf(c))
-		ty := ind.Type()
-		field, _ := ty.FieldByName("Location")
-		fileLocation := field.Tag.Get("loc")
-
-		// read file indicated by the field tag
-		fileBytes, err := ioutil.ReadFile(fileLocation)
-		if err != nil {
-			panic(err)
-		}
-		if err := json.Unmarshal(fileBytes, c); err != nil {
-			panic(err)
-		}
-
-		// init configuration struct field with the given config
-		configFieldName := strings.Split(ty.Name(), "Config")[0]
-		refConfig.FieldByName(configFieldName).Set(ind)
+func LoadConfig() (*Configuration, error) {
+	conf := &Configuration{}
+	configBytes, err := ioutil.ReadFile(configLoc)
+	if err != nil {
+		return nil, err
 	}
-	return configuration
+	if err := json.Unmarshal(configBytes, conf); err != nil {
+		return nil, err
+	}
+	return conf, err
 }
 
 type Configuration struct {
-	App AppConfig
-}
-
-type AppConfig struct {
-	Location interface{} `loc:"./configs/app.json"`
-	Name     string
-	Dev      bool
-	Verbose  bool
-	Account  AccountConfig
-	HTTP     WebConfig
-	Mongo    MongoConfig
+	Name      string
+	Dev       bool
+	Verbose   bool
+	Account   AccountConfig
+	HTTP      WebConfig
+	Mongo     MongoConfig
+	Mail      MailConfig
+	JWT       JWTConfig
+	ReCaptcha ReCaptchaConfig
+	Links     LinksConfig
 }
 
 type AccountConfig struct {
@@ -70,6 +51,16 @@ type MongoConfig struct {
 	CollName string `json:"collname"`
 }
 
+type JWTConfig struct {
+	PrivateKey  string `json:"private_key"`
+	ExpireHours uint64 `json:"expire_hours"`
+}
+
+type ReCaptchaConfig struct {
+	PrivateKey string `json:"private_key"`
+	PublicKey  string `json:"public_key"`
+}
+
 type WebConfig struct {
 	Domain  string
 	Address string
@@ -79,4 +70,17 @@ type WebConfig struct {
 		Favicon string
 	}
 	LogRequests bool
+}
+
+type MailConfig struct {
+	Host     string
+	Username string
+	Password string
+	Port     int
+	Sender   string
+}
+
+type LinksConfig struct {
+	Activation    string `json:"activation"`
+	PasswordReset string `json:"password_reset"`
 }

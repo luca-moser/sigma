@@ -1,11 +1,11 @@
 package main
 
 import (
+	"github.com/luca-moser/sigma/server/server"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-	"github.com/luca-moser/donapoc/server/server"
 )
 
 func main() {

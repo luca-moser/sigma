@@ -6,8 +6,8 @@
     "mwm": 14,
     "gtta_depth": 3,
     "security_level": 2,
-    "transfer_poll_interval": 5,
-    "promote_reattach_interval": 30,
+    "transfer_poll_interval": 90,
+    "promote_reattach_interval": 90,
     "address_validity_timeout_days": 3,
     "node": "https://node-x.iota-tangle.io:14268",
     "ntp_server": "time.google.com"
@@ -18,7 +18,7 @@
     "collname": "accounts"
   },
   "http": {
-    "domain": "example.com",
+    "domain": "sigma.io",
     "address": "0.0.0.0:9000",
     "assets": {
       "static": "../../client",
@@ -26,5 +26,24 @@
       "html": "../../client/html"
     },
     "logRequests": false
+  },
+  "jwt": {
+    "private_key": "9hdpt095x6dhoko76fwqwyknci7914t6aj7tq3s6aly3b9ap7o5s6nzaeatz50is",
+    "expire_hours": 72
+  },
+  "recaptcha": {
+    "private_key": "REPLACE ME",
+    "public_key": "REPLACE ME"
+  },
+  "mail": {
+    "host": "mail.gandi.net",
+    "username": "mail@sigma.io",
+    "password": "replaceme",
+    "port": 587,
+    "sender": "wallet@sigma.io"
+  },
+  "links": {
+    "activation": "https://sigma.io/activate/%s/%s",
+    "password_reset": "https://sigma.io/pw/reset/%s/%s"
   }
 }
