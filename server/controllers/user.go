@@ -388,12 +388,16 @@ func (uc *UserCtrl) RemoveUser(id string) error {
 
 // validates the given user instance
 func (uc *UserCtrl) ValidateUser(user *models.User, checkPW bool) error {
-	if len(user.Username) == 0 {
-		return errors.Wrap(ErrInvalidModel, "(user) username length is 0")
+	if len(user.Username) < 4 {
+		return errors.Wrapf(ErrInvalidModel, "(user) username '%s' is too short", user.Username)
 	}
 
-	if len(user.Username) > 50 {
+	if len(user.Username) > 30 {
 		return errors.Wrap(ErrInvalidModel, "(user) username length is too long")
+	}
+
+	if match, err := regexp.Match("\\s", []byte(user.Username)); match || err != nil {
+		return errors.Wrapf(ErrInvalidModel, "(user) username '%s' contains whitespace", user.Username)
 	}
 
 	if _, err := mail.ParseAddress(user.Email); err != nil {

@@ -1,39 +1,31 @@
 import * as React from 'react';
 import {inject, observer} from 'mobx-react';
-import {createStyles, withStyles} from '@material-ui/core/styles';
+import {withRouter} from "react-router";
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import {RegisterFormState, UserStore} from "../stores/UserStore";
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
+import {Link} from 'react-router-dom';
 
-
-const styles = createStyles({
-    button: {
-        marginTop: 50,
-        width: 200
-    },
-    progressBar: {
-        marginTop: 20
-    }
-});
+import * as css from './app.scss';
 
 interface Props {
     userStore?: UserStore;
-    classes?: any;
 }
 
+@withRouter
 @inject("userStore")
 @observer
-class registermask extends React.Component<Props, {}> {
+export class RegisterMask extends React.Component<Props, {}> {
 
     updateEmail = (e) => {
-        this.props.userStore.updateEmail(e.target.value);
+        this.props.userStore.updateRegisterEmail(e.target.value);
     }
 
     updateUsername = (e) => {
-        this.props.userStore.updateUsername(e.target.value);
+        this.props.userStore.updateRegisterUsername(e.target.value);
     }
 
     updatePassword = (e) => {
@@ -45,78 +37,94 @@ class registermask extends React.Component<Props, {}> {
     }
 
     render() {
-        let {classes} = this.props;
-        let {register_email, register_username, register_password, register_password_conf, register_form_state} = this.props.userStore;
+        let {
+            register_email, register_username, register_password,
+            register_password_conf, registerFormState
+        } = this.props.userStore;
+
         return (
+            <div className={css.container}>
+                <Grid container justify="center" spacing={32}>
+                    <Grid item>
+                        <Paper className={[css.defaultPaperBox, css.loginMask].join(" ")}>
 
-            <Grid container className={classes.root} spacing={16}>
-                <Grid item xs={12}>
-                    <Grid container className={classes.demo} justify="center" spacing={32}>
-                        <Grid item>
-                            <Paper className={classes.paper}>
+                            <Typography variant="h5" gutterBottom>
+                                Register
+                            </Typography>
 
-                                <Typography variant="h5" gutterBottom>
-                                    Login
-                                </Typography>
+                            <Typography component="p" gutterBottom>
+                                <Link className={css.link} to={'/login'}>
+                                    Already have an account? Login.
+                                </Link>
+                            </Typography>
 
-                                <TextField
-                                    label="Username"
-                                    value={register_username}
-                                    placeholder=""
-                                    onChange={this.updateUsername}
-                                    className={classes.textField}
-                                    InputLabelProps={{shrink: true,}}
-                                    margin="normal"
-                                    fullWidth
-                                />
+                            <TextField
+                                label="Username"
+                                value={register_username}
+                                placeholder=""
+                                helperText="no whitespace, min. 4 characters"
+                                onChange={this.updateUsername}
+                                error={registerFormState === RegisterFormState.InvalidUsername}
+                                InputLabelProps={{shrink: true,}}
+                                margin="normal"
+                                variant="outlined"
+                                fullWidth
+                            />
 
-                                <TextField
-                                    label="Email"
-                                    value={register_email}
-                                    placeholder=""
-                                    onChange={this.updateEmail}
-                                    className={classes.textField}
-                                    InputLabelProps={{shrink: true,}}
-                                    margin="normal"
-                                    fullWidth
-                                />
+                            <TextField
+                                label="Email"
+                                value={register_email}
+                                placeholder=""
+                                onChange={this.updateEmail}
+                                error={registerFormState === RegisterFormState.InvalidEmail}
+                                InputLabelProps={{shrink: true,}}
+                                margin="normal"
+                                variant="outlined"
+                                fullWidth
+                            />
 
-                                <TextField
-                                    label="Password"
-                                    className={classes.textField}
-                                    value={register_password}
-                                    onChange={this.updatePassword}
-                                    InputLabelProps={{shrink: true,}}
-                                    type="password"
-                                    margin="normal"
-                                    fullWidth
-                                />
+                            <TextField
+                                label="Password"
+                                helperText="no whitespace, min. 4 characters"
+                                value={register_password}
+                                onChange={this.updatePassword}
+                                error={
+                                    registerFormState === RegisterFormState.InvalidPassword ||
+                                    registerFormState === RegisterFormState.PasswordMismatch
+                                }
+                                InputLabelProps={{shrink: true,}}
+                                type="password"
+                                margin="normal"
+                                variant="outlined"
+                                fullWidth
+                            />
 
-                                <TextField
-                                    label="Password Confirmation"
-                                    className={classes.textField}
-                                    value={register_password_conf}
-                                    onChange={this.updatePassword}
-                                    InputLabelProps={{shrink: true,}}
-                                    type="password"
-                                    margin="normal"
-                                    fullWidth
-                                />
+                            <TextField
+                                label="Password Confirmation"
+                                value={register_password_conf}
+                                onChange={this.updatePasswordConf}
+                                error={
+                                    registerFormState === RegisterFormState.InvalidPasswordConf ||
+                                    registerFormState === RegisterFormState.PasswordMismatch
+                                }
+                                helperText={registerFormState === RegisterFormState.PasswordMismatch ? 'mismatch' : ''}
+                                InputLabelProps={{shrink: true,}}
+                                type="password"
+                                margin="normal"
+                                variant="outlined"
+                                fullWidth
+                            />
 
-                                <Button variant="outlined" color="primary"
-                                        onClick={this.props.userStore.register}
-                                        disabled={register_form_state !== RegisterFormState.Ok}
-                                        className={classes.button}>
-                                    Register
-                                </Button>
-                            </Paper>
-                        </Grid>
+                            <Button variant="outlined" color="primary"
+                                    onClick={this.props.userStore.register}
+                                    disabled={registerFormState !== RegisterFormState.Ok}
+                                    className={css.loginButton}>
+                                Register
+                            </Button>
+                        </Paper>
                     </Grid>
                 </Grid>
-            </Grid>
+            </div>
         );
     }
 }
-
-
-export let RegisterMask = withStyles(styles)(registermask);

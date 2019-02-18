@@ -58,3 +58,14 @@ export function fetchOpts(payload: string, token?: string): RequestInit {
     }
     return req;
 }
+
+const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+export function validateEmail(email: string) {
+    return emailRegex.test(String(email).toLowerCase());
+}
+
+const whitespaceRegex = /^\S*$/;
+export function hasNoWhitespace(s: string){
+    return whitespaceRegex.test(s);
+}

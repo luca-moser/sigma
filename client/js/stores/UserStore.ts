@@ -1,5 +1,5 @@
-import {action, observable} from 'mobx';
-import {FetchConst, fetchOpts} from "../misc/Utils";
+import {action, computed, observable} from 'mobx';
+import {FetchConst, fetchOpts, hasNoWhitespace, validateEmail} from "../misc/Utils";
 import jwtDecode from 'jwt-decode';
 
 export enum LoginFormState {
@@ -16,6 +16,7 @@ export enum RegisterFormState {
     InvalidEmail,
     InvalidPassword,
     InvalidPasswordConf,
+    PasswordMismatch,
 }
 
 const loginRoute = "/login";
@@ -51,9 +52,8 @@ export class UserStore {
     @observable username: string = "";
 
     // login form
-    @observable email: string = "";
-    @observable password: string = "";
-    @observable login_form_state = LoginFormState.Empty;
+    @observable login_email: string = "";
+    @observable login_password: string = "";
     @observable login_error: string = "";
     @observable logging_in: boolean = false;
 
@@ -62,7 +62,6 @@ export class UserStore {
     @observable register_password_conf: string = "";
     @observable register_username: string = "";
     @observable register_email: string = "";
-    @observable register_form_state = RegisterFormState.Empty;
 
     constructor() {
         this.verifyStoredToken();
@@ -96,7 +95,7 @@ export class UserStore {
     }
 
     login = async () => {
-        let credentials = JSON.stringify({email: this.email, password: this.password});
+        let credentials = JSON.stringify({email: this.login_email, password: this.login_password});
         try {
             this.updateLoggingIn(true);
             let res = await fetch(loginRoute, fetchOpts(credentials));
@@ -118,6 +117,47 @@ export class UserStore {
     register = async () => {
 
     }
+
+    @computed get loginFormState(): LoginFormState {
+        if (!this.login_email && !this.login_password) {
+            return LoginFormState.Empty;
+        }
+        if (!validateEmail(this.login_email)) {
+            return LoginFormState.InvalidEmail;
+        }
+        if (!hasNoWhitespace(this.login_password) || this.login_password.length < 4) {
+            return LoginFormState.InvalidPassword;
+        }
+        return LoginFormState.Ok;
+    }
+
+    @computed get registerFormState(): RegisterFormState {
+        if (!this.register_username &&
+            !this.register_password &&
+            !this.register_password_conf &&
+            !this.register_email) {
+            return RegisterFormState.Empty;
+        }
+        if (!hasNoWhitespace(this.register_username) || this.register_username.length < 4) {
+            return RegisterFormState.InvalidUsername;
+        }
+        if (!validateEmail(this.register_email)) {
+            return RegisterFormState.InvalidEmail;
+        }
+        if (!hasNoWhitespace(this.register_password) || this.register_password.length < 4) {
+            return RegisterFormState.InvalidPassword;
+        }
+        if (!hasNoWhitespace(this.register_password_conf) || this.register_password_conf.length < 4) {
+            return RegisterFormState.InvalidPasswordConf;
+        }
+        if (this.register_password !== this.register_password_conf) {
+            return RegisterFormState.PasswordMismatch;
+        }
+        return RegisterFormState.Ok;
+    }
+
+    @action
+    updateUsername = (username: string) => this.username = username;
 
     @action
     updateRegisterPassword = (pw: string) => this.register_password = pw;
@@ -147,13 +187,10 @@ export class UserStore {
     updateLoadError = (err: any) => this.load_error = err;
 
     @action
-    updateUsername = (username: string) => this.username = username;
+    updateLoginEmail = (email: string) => this.login_email = email;
 
     @action
-    updateEmail = (email: string) => this.email = email;
-
-    @action
-    updatePassword = (password: string) => this.password = password;
+    updateLoginPassword = (password: string) => this.login_password = password;
 
 }
 

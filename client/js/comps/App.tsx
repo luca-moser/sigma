@@ -15,6 +15,7 @@ interface Props {
     userStore?: UserStore;
 }
 
+@withRouter
 @inject("userStore")
 @observer
 export class App extends React.Component<Props, {}> {
@@ -30,7 +31,7 @@ export class App extends React.Component<Props, {}> {
                 </AppBar>
 
                 <Loaded/>
-                {__DEVELOPMENT__ && <DevTools/>}
+                {__DEVELOPMENT__ && <DevTools/> }
             </div>
         );
     }
