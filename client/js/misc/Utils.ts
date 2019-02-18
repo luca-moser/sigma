@@ -38,3 +38,23 @@ export function validMagnetLink(link: string): boolean {
     if (!expectedAmount) return true;
     return parseInt(expectedAmount) >= 0;
 }
+
+export enum FetchConst {
+    ContentType = "Content-Type",
+    Authorization = "Authorization",
+    JSONContent = "application/json",
+}
+
+export function fetchOpts(payload: string, token?: string): RequestInit {
+    let req = {
+        method: "POST",
+        headers: {
+            [FetchConst.ContentType]: FetchConst.JSONContent,
+        },
+        body: payload,
+    };
+    if (token) {
+        req.headers[FetchConst.Authorization] = `Bearer ${token}`;
+    }
+    return req;
+}

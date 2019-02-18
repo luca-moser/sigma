@@ -1,19 +1,21 @@
-import {Dashboard} from "./Dashboard";
-
-declare var __DEVELOPMENT__;
+import {Loaded} from "./Loaded";
 import * as React from 'react';
 import {inject, observer} from 'mobx-react';
-import {ApplicationStore} from '../stores/AppStore';
 import DevTools from 'mobx-react-devtools';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
+import {UserStore} from "../stores/UserStore";
+import {Route, Switch} from 'react-router-dom';
+import {withRouter} from "react-router";
+
+declare var __DEVELOPMENT__;
 
 interface Props {
-    appStore?: ApplicationStore;
+    userStore?: UserStore;
 }
 
-@inject("appStore")
+@inject("userStore")
 @observer
 export class App extends React.Component<Props, {}> {
     render() {
@@ -26,8 +28,9 @@ export class App extends React.Component<Props, {}> {
                         </Typography>
                     </Toolbar>
                 </AppBar>
-                <Dashboard/>
-                {__DEVELOPMENT__ ? <DevTools/> : <span/>}
+
+                <Loaded/>
+                {__DEVELOPMENT__ && <DevTools/>}
             </div>
         );
     }

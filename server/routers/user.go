@@ -50,7 +50,7 @@ func (ur *UserRouter) Init() {
 	jwtConf := ur.Config.JWT
 
 	// authenticate the user
-	ur.R.POST("/login", func(c echo.Context) error {
+	ur.R.POST("/user/login", func(c echo.Context) error {
 
 		// check whether user already has a JWT
 		maybeJWT := c.Get("user")
@@ -96,6 +96,7 @@ func (ur *UserRouter) Init() {
 		claims := &models.UserJWTClaims{
 			UserID: user.ID, Auth: true,
 			Admin:     user.Admin,
+			Username:  user.Username,
 			Confirmed: user.Confirmed,
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: time.Now().Add(time.Hour * time.Duration(jwtConf.ExpireHours)).Unix(),
@@ -110,7 +111,7 @@ func (ur *UserRouter) Init() {
 		return c.JSON(http.StatusOK, echo.Map{"token": t, "user": user})
 	})
 
-	userRoutes := ur.R.Group("/users")
+	userRoutes := ur.R.Group("/user")
 
 	// redeem confirmation code
 	userRoutes.GET("/code/:userID/:code", func(c echo.Context) error {
@@ -126,7 +127,7 @@ func (ur *UserRouter) Init() {
 		}
 
 		updatedClaims := &models.UserJWTClaims{
-			UserID: user.ID, Auth: true,
+			UserID: user.ID, Auth: true, Username: user.Username,
 			Admin: user.Admin, Confirmed: true,
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: time.Now().Add(time.Hour * time.Duration(jwtConf.ExpireHours)).Unix(),
@@ -240,7 +241,8 @@ func (ur *UserRouter) Init() {
 
 	// deactivate user
 	userRoutes.DELETE("/id/:id", func(c echo.Context) error {
-		if err := ur.UC.DeactivateUser(c.Param("id")); err != nil {
+		claims := c.Get("claims").(*models.UserJWTClaims)
+		if err := ur.UC.DeactivateUser(claims.UserID.Hex()); err != nil {
 			return err
 		}
 		return c.JSON(http.StatusOK, SimpleMsg{"ok"})
@@ -294,7 +296,8 @@ func (ur *UserRouter) Init() {
 		}
 
 		impersonatedUserClaims := &models.UserJWTClaims{
-			Admin: user.Admin, Auth: true, UserID: user.ID, Confirmed: user.Confirmed,
+			Admin: user.Admin, Auth: true, UserID: user.ID,
+			Confirmed: user.Confirmed, Username: user.Username,
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: time.Now().Add(time.Hour * time.Duration(jwtConf.ExpireHours)).Unix(),
 			},

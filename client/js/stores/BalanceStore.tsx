@@ -1,4 +1,4 @@
-import {observable, runInAction} from 'mobx';
+import {action, observable, runInAction} from 'mobx';
 import {Message} from "../misc/Message";
 import {createWebSocket} from "../misc/Utils";
 
@@ -32,11 +32,10 @@ export class BalanceStore {
         };
     }
 
+    @action
     updateBalance = (balance: BalanceUpdate) => {
-        runInAction(() => {
-            this.available = balance.available;
-            this.total = balance.total;
-        });
+        this.available = balance.available;
+        this.total = balance.total;
     }
 
 }

@@ -26,12 +26,10 @@ const styles = createStyles({
 });
 
 interface Props {
-    appStore?: ApplicationStore;
     historyStore?: HistoryStore;
     classes?: any;
 }
 
-@inject("appStore")
 @inject("historyStore")
 @observer
 class history extends React.Component<Props, {}> {

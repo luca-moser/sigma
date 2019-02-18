@@ -10,6 +10,8 @@ import (
 	"github.com/luca-moser/sigma/server/server/config"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
+	"github.com/mongodb/mongo-go-driver/x/bsonx"
 	"gopkg.in/gomail.v2"
 	"html/template"
 	mathRand "math/rand"
@@ -39,21 +41,27 @@ func (uc *UserCtrl) Init() error {
 	dbName := uc.Config.Mongo.DBName
 	uc.Coll = uc.Mongo.Database(dbName).Collection(userCollection)
 
-	emailIndexBuilder := mongo.NewIndexOptionsBuilder()
-	emailIndex := emailIndexBuilder.
-		Name("email").
-		Unique(true).
-		Background(true).
-		Sparse(true).Build()
+	t := true
+	f := false
+	emailIndexName := "email"
+	usernameIndexName := "username"
+	usernameIndex := mongo.IndexModel{
+		Keys: bsonx.Doc{{Key: "username", Value: bsonx.Int32(int32(1))}},
+		Options: &options.IndexOptions{
+			Name: &usernameIndexName, Background: &f,
+			Unique: &t, Sparse: &t,
+		},
+	}
 
-	usernameIndexBuilder := mongo.NewIndexOptionsBuilder()
-	usernameIndex := usernameIndexBuilder.
-		Name("username").
-		Unique(true).
-		Background(true).
-		Sparse(true).Build()
+	emailIndex := mongo.IndexModel{
+		Keys: bsonx.Doc{{Key: "email", Value: bsonx.Int32(int32(1))}},
+		Options: &options.IndexOptions{
+			Name: &emailIndexName, Background: &f,
+			Unique: &t, Sparse: &t,
+		},
+	}
 
-	indexes := []mongo.IndexModel{{Keys: emailIndex}, {Keys: usernameIndex}}
+	indexes := []mongo.IndexModel{usernameIndex, emailIndex}
 	_, err := uc.Coll.Indexes().CreateMany(getCtx(), indexes)
 	if err != nil {
 		return err

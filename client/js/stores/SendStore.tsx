@@ -93,10 +93,7 @@ export class SendStore {
                     this.resetSending();
                     break;
                 default:
-                    // simply update send_state
-                    runInAction(() => {
-                        this.send_state = msg.type;
-                    });
+                    this.updateSendState(msg.type);
             }
         };
     }
@@ -110,10 +107,13 @@ export class SendStore {
         this.ws.send(JSON.stringify(msg));
     }
 
-    resetSending = () => {
-        runInAction(() => this.sending = false);
-    }
+    @action
+    resetSending = () => this.sending = false;
 
+    @action
+    updateSendState = (state: any) => this.send_state = state;
+
+    @action
     updateFormState = () => {
         if (this.link.length === 0) {
             this.form_state = FormState.Empty;

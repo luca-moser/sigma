@@ -1,4 +1,4 @@
-import {observable} from 'mobx';
+import {action, observable} from 'mobx';
 import {createWebSocket} from "../misc/Utils";
 import {Message} from "../misc/Message";
 
@@ -52,10 +52,12 @@ export class HistoryStore {
         };
     }
 
+    @action
     addItem = (item: HistoryItem) => {
         this.items.set(item.tail, item);
     }
 
+    @action
     resetItems = (items: Array<HistoryItem>) => {
         let map = new Map();
         items.forEach(item => {

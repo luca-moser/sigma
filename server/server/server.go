@@ -105,6 +105,9 @@ func (server *Server) Start() {
 		panic(err)
 	}
 
+	// load mail templates
+	mailTemplates := template.Must(template.New("mails.html").ParseGlob("./mails.html"))
+
 	// jwt
 	authJWTConf := middleware.JWTConfig{
 		Claims:     &models.UserJWTClaims{},
@@ -121,6 +124,7 @@ func (server *Server) Start() {
 		&inject.Object{Value: conf},
 		&inject.Object{Value: conf.Dev, Name: "dev"},
 		&inject.Object{Value: authJWTConf, Name: "jwt_config_user"},
+		&inject.Object{Value: mailTemplates, Name: "mail_templates"},
 	); err != nil {
 		panic(err)
 	}

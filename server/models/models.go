@@ -27,7 +27,7 @@ type User struct {
 type UserJWTClaims struct {
 	jwt.StandardClaims
 	UserID    primitive.ObjectID `json:"user_id"`
-	Name      string             `json:"name"`
+	Username  string             `json:"username"`
 	Auth      bool               `json:"auth"`
 	Confirmed bool               `json:"confirmed"`
 	Admin     bool               `json:"admin"`

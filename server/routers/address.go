@@ -37,7 +37,7 @@ func (router *AddressStreamRouter) Init() {
 	g.Use(onlyAuth)
 	g.Use(onlyConfirmed)
 
-	g.GET("", func(c echo.Context) error {
+	g.GET("/", func(c echo.Context) error {
 		claims := c.Get("claims").(*models.UserJWTClaims)
 		tuple, err := router.AccCtrl.Get(claims.UserID.Hex())
 		if err != nil {

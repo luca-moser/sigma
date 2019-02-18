@@ -9,6 +9,7 @@ import {Send} from "./Send";
 import {Addresses} from "./Addresses";
 import {History} from "./History";
 import Divider from '@material-ui/core/Divider';
+import {withAuth} from "./Authenticated";
 
 declare var __DEVELOPMENT__;
 
@@ -30,11 +31,8 @@ const styles = createStyles({
 });
 
 interface Props {
-    appStore?: ApplicationStore;
     classes?: any;
 }
-
-@inject("appStore")
 @observer
 class dashboard extends React.Component<Props, {}> {
     render() {
@@ -68,4 +66,4 @@ class dashboard extends React.Component<Props, {}> {
 }
 
 
-export let Dashboard = withStyles(styles)(dashboard);
+export let Dashboard =  withAuth(withStyles(styles)(dashboard)) ;

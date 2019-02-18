@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {inject, observer} from 'mobx-react';
-import {ApplicationStore} from '../stores/AppStore';
 import {createStyles, withStyles} from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import {BalanceStore} from "../stores/BalanceStore";
@@ -8,12 +7,10 @@ import {BalanceStore} from "../stores/BalanceStore";
 const styles = createStyles({});
 
 interface Props {
-    appStore?: ApplicationStore;
     balStore?: BalanceStore;
     classes?: any;
 }
 
-@inject("appStore")
 @inject("balStore")
 @observer
 class balance extends React.Component<Props, {}> {

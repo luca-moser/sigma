@@ -13,6 +13,7 @@
     "axios": "^0.18.0",
     "dateformat": "^3.0.3",
     "express": "^4.16.4",
+    "jwt-decode": "^2.2.0",
     "mobx": "^5.8.0",
     "mobx-react": "^5.4.3",
     "qrcode.react": "^0.9.1",

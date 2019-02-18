@@ -1,4 +1,4 @@
-import {observable} from 'mobx';
+import {action, observable} from 'mobx';
 import {createWebSocket} from "../misc/Utils";
 import {Message} from "../misc/Message";
 
@@ -41,10 +41,12 @@ export class AddressesStore {
         };
     }
 
+    @action
     addItem = (addr: Address) => {
         this.addrs.set(addr.address, addr);
     }
 
+    @action
     resetItems = (addrs: Array<Address>) => {
         let map = new Map();
         addrs.forEach(addr => {

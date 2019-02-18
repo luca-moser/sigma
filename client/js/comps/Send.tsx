@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {inject, observer} from 'mobx-react';
-import {ApplicationStore} from '../stores/AppStore';
 import {createStyles, withStyles} from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -8,7 +7,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Button from '@material-ui/core/Button';
 import {FormState, SendStore, unitMap} from "../stores/SendStore";
 import LinearProgress from '@material-ui/core/LinearProgress';
-
 
 const styles = createStyles({
     button: {
@@ -21,12 +19,10 @@ const styles = createStyles({
 });
 
 interface Props {
-    appStore?: ApplicationStore;
     sendStore?: SendStore;
     classes?: any;
 }
 
-@inject("appStore")
 @inject("sendStore")
 @observer
 class send extends React.Component<Props, {}> {

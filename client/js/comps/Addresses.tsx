@@ -25,12 +25,10 @@ const styles = createStyles({
 });
 
 interface Props {
-    appStore?: ApplicationStore;
     addrsStore?: AddressesStore;
     classes?: any;
 }
 
-@inject("appStore")
 @inject("addrsStore")
 @observer
 class addresses extends React.Component<Props, {}> {
