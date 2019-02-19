@@ -8,6 +8,7 @@ import (
 	"github.com/luca-moser/sigma/server/misc"
 	"github.com/luca-moser/sigma/server/models"
 	"github.com/luca-moser/sigma/server/server/config"
+	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/options"
@@ -24,7 +25,6 @@ import (
 	"regexp"
 
 	"github.com/pkg/errors"
-	"gopkg.in/mgo.v2/bson"
 )
 
 const userCollection = "users"
@@ -50,6 +50,10 @@ func (uc *UserCtrl) Init() error {
 		Options: &options.IndexOptions{
 			Name: &usernameIndexName, Background: &f,
 			Unique: &t, Sparse: &t,
+			Collation: &options.Collation{
+				Locale:   "en",
+				Strength: 2,
+			},
 		},
 	}
 
@@ -58,6 +62,10 @@ func (uc *UserCtrl) Init() error {
 		Options: &options.IndexOptions{
 			Name: &emailIndexName, Background: &f,
 			Unique: &t, Sparse: &t,
+			Collation: &options.Collation{
+				Locale:   "en",
+				Strength: 2,
+			},
 		},
 	}
 
@@ -96,7 +104,6 @@ func (uc *UserCtrl) RequestPasswordReset(email string) error {
 	if err != nil {
 		return err
 	}
-
 	resetCode := misc.GenerateRandomCode(15)
 	mut := bson.D{{"$set", bson.D{{"password_reset_code", resetCode}}}}
 	_, err = uc.Coll.UpdateOne(getCtx(), bson.D{{"_id", user.ID}}, mut)
@@ -218,12 +225,19 @@ func (uc *UserCtrl) GetUserByUsername(username string) (*models.User, error) {
 
 // gets the user by the given email
 func (uc *UserCtrl) GetUserByEmail(email string) (*models.User, error) {
+	countByEmail, err := uc.Coll.Count(getCtx(), bson.D{{"email", email}})
+	if err != nil {
+		return nil, err
+	}
+	if countByEmail == 0 {
+		return nil, ErrUserNotFound
+	}
 	res := uc.Coll.FindOne(getCtx(), bson.D{{"email", email}})
 	if res.Err() != nil {
 		return nil, res.Err()
 	}
 	user := &models.User{}
-	err := res.Decode(user)
+	err = res.Decode(user)
 	return user, errors.Wrapf(err, "(user) couldn't load user by email '%s", email)
 }
 
@@ -231,6 +245,28 @@ func (uc *UserCtrl) GetUserByEmail(email string) (*models.User, error) {
 func (uc *UserCtrl) CreateUser(user *models.User) (*primitive.ObjectID, error) {
 	if err := uc.ValidateUser(user, true); err != nil {
 		return nil, err
+	}
+
+	// check whether email is taken
+	countByEmail, err := uc.Coll.Count(getCtx(), bson.D{{"email", user.Email}})
+	if err != nil {
+		return nil, err
+	}
+	if countByEmail != 0 {
+		return nil, ErrEmailTaken
+	}
+
+	// check whether username is taken (case-insensitive)
+	countByUsername, err := uc.Coll.Count(getCtx(), bson.D{{"username", user.Username}}, &options.CountOptions{
+		Collation: &options.Collation{
+			Locale: "en", Strength: 2,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if countByUsername != 0 {
+		return nil, ErrUsernameTaken
 	}
 
 	// salt = md5(random num)

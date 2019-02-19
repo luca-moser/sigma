@@ -1,12 +1,13 @@
 import * as React from 'react';
 import {inject, observer} from 'mobx-react';
-import {withRouter} from "react-router";
+import {Redirect, withRouter} from "react-router";
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import {RegisterFormState, UserStore} from "../stores/UserStore";
+import {RegisterError, RegisterFormState, UserStore} from "../stores/UserStore";
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import {Link} from 'react-router-dom';
 
 import * as css from './app.scss';
@@ -36,11 +37,38 @@ export class RegisterMask extends React.Component<Props, {}> {
         this.props.userStore.updateRegisterPasswordConf(e.target.value);
     }
 
+    register = () => {
+        this.props.userStore.register();
+    }
+
     render() {
         let {
             register_email, register_username, register_password,
-            register_password_conf, registerFormState
+            register_password_conf, registerFormState, registering,
+            registered, register_error, register_error_text,
         } = this.props.userStore;
+
+        if (registered) {
+            return (
+                <div className={css.container}>
+                    <Grid container justify="center" spacing={32}>
+                        <Grid item>
+                            <Paper className={[css.defaultPaperBox, css.loginMask].join(" ")}>
+
+                                <Typography variant="h5" gutterBottom>
+                                    Confirm Your Registration
+                                </Typography>
+
+                                <Typography component="p" gutterBottom>
+                                    Please verify your email via the confirmation link we have sent to {register_email}.
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                    </Grid>
+                </div>
+            );
+        }
+
 
         return (
             <div className={css.container}>
@@ -64,7 +92,10 @@ export class RegisterMask extends React.Component<Props, {}> {
                                 placeholder=""
                                 helperText="no whitespace, min. 4 characters"
                                 onChange={this.updateUsername}
-                                error={registerFormState === RegisterFormState.InvalidUsername}
+                                error={
+                                    registerFormState === RegisterFormState.InvalidUsername ||
+                                    register_error === RegisterError.UsernameTaken
+                                }
                                 InputLabelProps={{shrink: true,}}
                                 margin="normal"
                                 variant="outlined"
@@ -76,7 +107,10 @@ export class RegisterMask extends React.Component<Props, {}> {
                                 value={register_email}
                                 placeholder=""
                                 onChange={this.updateEmail}
-                                error={registerFormState === RegisterFormState.InvalidEmail}
+                                error={
+                                    registerFormState === RegisterFormState.InvalidEmail ||
+                                    register_error === RegisterError.EmailTaken
+                                }
                                 InputLabelProps={{shrink: true,}}
                                 margin="normal"
                                 variant="outlined"
@@ -115,12 +149,21 @@ export class RegisterMask extends React.Component<Props, {}> {
                                 fullWidth
                             />
 
+                            {
+                                register_error !== RegisterError.None &&
+                                <Typography component="p" gutterBottom className={css.errorText}>
+                                    {register_error_text}
+                                </Typography>
+                            }
+
                             <Button variant="outlined" color="primary"
                                     onClick={this.props.userStore.register}
-                                    disabled={registerFormState !== RegisterFormState.Ok}
+                                    disabled={registerFormState !== RegisterFormState.Ok || registering}
                                     className={css.loginButton}>
                                 Register
                             </Button>
+
+                            {registering && <LinearProgress className={css.progressBar}/>}
                         </Paper>
                     </Grid>
                 </Grid>

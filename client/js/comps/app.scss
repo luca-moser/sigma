@@ -26,3 +26,12 @@ body {
 .loginMask {
   width: 600px;
 }
+
+.progressBar {
+  position: relative;
+  margin-top: 20px;
+}
+
+.errorText {
+  color: red !important;
+}

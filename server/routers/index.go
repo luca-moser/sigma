@@ -3,6 +3,7 @@ package routers
 import (
 	"fmt"
 	"github.com/labstack/echo"
+	"github.com/luca-moser/sigma/server/controllers"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"io/ioutil"
@@ -60,18 +61,43 @@ func (indexRouter *IndexRouter) Init() {
 			statusCode = http.StatusForbidden
 			message = "access forbidden"
 
-			// 500 internal server error
+		// 500 internal server error
+		case controllers.ErrInternalError:
+			fallthrough
 		case ErrInternalServer:
 			statusCode = http.StatusInternalServerError
 			message = "internal server error"
 
-			// 404 not found
+		// 404 not found
+		case controllers.ErrUserNotFound:
+			fallthrough
 		case mgo.ErrNotFound:
 			statusCode = http.StatusNotFound
 			message = "not found"
 
-			// 400 bad request
+		// 400 bad request
+		case controllers.ErrInvalidID:
+			fallthrough
+		case controllers.ErrInvalidQuery:
+			fallthrough
+		case controllers.ErrInvalidModel:
+			fallthrough
+		case controllers.ErrInvalidModelUpdate:
+			fallthrough
+		case controllers.ErrInvalidModelDeletion:
+			fallthrough
+		case controllers.ErrAlreadyConfirmed:
+			fallthrough
+		case controllers.ErrInvalidConfirmationCode:
+			fallthrough
+		case controllers.ErrUsernameTaken:
+			fallthrough
+		case controllers.ErrWrongPassword:
+			fallthrough
+		case controllers.ErrEmailTaken:
+			fallthrough
 		case ErrBadRequest:
+			statusCode = http.StatusBadRequest
 			message = "bad request"
 
 			// 500 internal server error

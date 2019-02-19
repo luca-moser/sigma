@@ -69,3 +69,8 @@ const whitespaceRegex = /^\S*$/;
 export function hasNoWhitespace(s: string){
     return whitespaceRegex.test(s);
 }
+
+export enum Routes {
+    LOGIN = "/user/login",
+    REGISTER = "/user/id"
+}
