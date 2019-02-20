@@ -33,7 +33,7 @@ export class HistoryStore {
     @observable items = new Map();
 
     constructor() {
-        this.connect();
+
     }
 
     connect() {

@@ -2,6 +2,8 @@ package routers
 
 import (
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 	"github.com/luca-moser/sigma/server/controllers"
 	"github.com/pkg/errors"
@@ -14,6 +16,7 @@ var ErrBadRequest = errors.New("bad request")
 var ErrUnauthorized = errors.New("unauthorized")
 var ErrInternalServer = errors.New("internal server error")
 var ErrForbidden = errors.New("access forbidden")
+var ErrInvalidJWTToken = errors.New("invalid jwt token")
 
 type SimpleMsg struct {
 	Msg string `json:"msg"`
@@ -21,6 +24,44 @@ type SimpleMsg struct {
 
 type SimpleCountMsg struct {
 	Count int `json:"count"`
+}
+
+type wsjwt struct {
+	Token string `json:"token"`
+}
+
+type wsauthmsg struct {
+	Auth bool `json:"auth"`
+}
+
+func authWS(ws *websocket.Conn, signingKey interface{}) (string, error) {
+	wsJWT := &wsjwt{}
+	if err := ws.ReadJSON(wsJWT); err != nil {
+		return "", err
+	}
+
+	jwtToken, err := jwt.Parse(wsJWT.Token, func(t *jwt.Token) (i interface{}, e error) {
+		return signingKey, nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	if !jwtToken.Valid {
+		if err := ws.WriteJSON(wsauthmsg{true}); err != nil {
+			return "", err
+		}
+		ws.Close()
+		return "", nil
+	}
+
+	if err := ws.WriteJSON(wsauthmsg{true}); err != nil {
+		ws.Close()
+		return "", err
+	}
+
+	return jwtToken.Claims.(jwt.MapClaims)["user_id"].(string), nil
 }
 
 type Router interface {

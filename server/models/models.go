@@ -32,3 +32,21 @@ type UserJWTClaims struct {
 	Confirmed bool               `json:"confirmed"`
 	Admin     bool               `json:"admin"`
 }
+
+type History struct {
+	ID primitive.ObjectID `json:"_id"`
+}
+
+type HistoryItemType byte
+
+const (
+	HistoryReceiving HistoryItemType = iota
+	HistoryReceived
+	HistorySending
+	HistorySent
+)
+
+type HistoryItem struct {
+	Amount uint64          `json:"amount"`
+	Type   HistoryItemType `json:"type"`
+}

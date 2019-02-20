@@ -4,18 +4,15 @@ import {createStyles, withStyles} from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import {BalanceStore} from "../stores/BalanceStore";
 
-const styles = createStyles({});
 
 interface Props {
     balStore?: BalanceStore;
-    classes?: any;
 }
 
 @inject("balStore")
 @observer
-class balance extends React.Component<Props, {}> {
+export class Balance extends React.Component<Props, {}> {
     render() {
-        let {classes} = this.props;
         let {available, total} = this.props.balStore;
         return (
             <div>
@@ -23,16 +20,10 @@ class balance extends React.Component<Props, {}> {
                     Balance
                 </Typography>
                 <Typography variant="subtitle1">
-                    Available balance: {available} iotas
-                </Typography>
-                <Typography variant="subtitle1">
-                    Total balance: {total} iotas
+                    Total: {total} iotas (available: {available} iotas)
                 </Typography>
 
             </div>
         );
     }
 }
-
-
-export let Balance = withStyles(styles)(balance);

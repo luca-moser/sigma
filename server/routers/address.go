@@ -5,7 +5,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/luca-moser/sigma/server/controllers"
-	"github.com/luca-moser/sigma/server/models"
 	"time"
 )
 
@@ -29,22 +28,25 @@ const (
 	NewAddress AddressReq = iota
 )
 
+type newaddress struct {
+	Address interface{} `json:"address"`
+	Link    string      `json:"link"`
+}
+
 func (router *AddressStreamRouter) Init() {
 
-	g := router.R.Group("/stream/address")
-
-	g.Use(middleware.JWTWithConfig(router.JWTConfig))
-	g.Use(onlyAuth)
-	g.Use(onlyConfirmed)
-
-	g.GET("/", func(c echo.Context) error {
-		claims := c.Get("claims").(*models.UserJWTClaims)
-		tuple, err := router.AccCtrl.Get(claims.UserID.Hex())
+	router.R.GET("/stream/address", func(c echo.Context) error {
+		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			return err
 		}
 
-		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+		userID, err := authWS(ws, router.JWTConfig.SigningKey)
+		if err != nil {
+			return err
+		}
+
+		tuple, err := router.AccCtrl.Get(userID)
 		if err != nil {
 			return err
 		}
@@ -73,6 +75,7 @@ func (router *AddressStreamRouter) Init() {
 			return err
 		}
 
+		ws.SetReadDeadline(time.Time{})
 		for {
 			m := &msg{}
 			if err := ws.ReadJSON(m); err != nil {
@@ -87,13 +90,14 @@ func (router *AddressStreamRouter) Init() {
 					break
 				}
 				plusOneHour := now.Add(time.Duration(1) * time.Hour)
-				conds, err := tuple.Account.AllocateDepositRequest(&deposit.Request{TimeoutAt: &plusOneHour, MultiUse: true})
+				req := &deposit.Request{TimeoutAt: &plusOneHour, MultiUse: true}
+				conds, err := tuple.Account.AllocateDepositRequest(req)
 				if err != nil {
 					// TODO: send down error
 					break
 				}
-
-				if err := ws.WriteJSON(&msg{Type: byte(AddressAdd), Data: conds}); err != nil {
+				data := &newaddress{conds, conds.AsMagnetLink()}
+				if err := ws.WriteJSON(&msg{Type: byte(AddressAdd), Data: data}); err != nil {
 					return err
 				}
 			}

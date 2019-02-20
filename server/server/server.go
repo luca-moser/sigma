@@ -86,8 +86,10 @@ func (server *Server) Start() {
 	// create routers
 	indexRouter := &routers.IndexRouter{}
 	accRouter := &routers.SendStreamRouter{}
+	addrsRouter := &routers.AddressStreamRouter{}
+	balanceRouter := &routers.BalanceStreamRouter{}
 	userRouter := &routers.UserRouter{}
-	rters := []routers.Router{indexRouter, accRouter, userRouter}
+	rters := []routers.Router{indexRouter, accRouter, userRouter, addrsRouter, balanceRouter}
 
 	// init mongo db conn
 	mongoClient, err := mongo.NewClientWithOptions(server.Config.Mongo.URI, []*options.ClientOptions{

@@ -5,8 +5,13 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Button from '@material-ui/core/Button';
-import {FormState, SendStore, unitMap} from "../stores/SendStore";
+import {FormState, SendRecType, SendStore, stateTypeToString, unitMap} from "../stores/SendStore";
 import LinearProgress from '@material-ui/core/LinearProgress';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 const styles = createStyles({
     button: {
@@ -39,11 +44,19 @@ class send extends React.Component<Props, {}> {
         this.props.sendStore.updateLink(e.target.value);
     }
 
+    send = () => {
+        this.props.sendStore.send();
+    }
+
+    resetSendState = () => {
+        this.props.sendStore.resetSendState();
+    }
+
     render() {
         let {classes} = this.props;
-        let {unit, amount, link, form_state, sending} = this.props.sendStore;
+        let {unit, amount, link, form_state, sending, send_state, stream_connected, tail} = this.props.sendStore;
         return (
-            <div>
+            <React.Fragment>
                 <Typography variant="h5" gutterBottom>
                     Send
                 </Typography>
@@ -62,6 +75,7 @@ class send extends React.Component<Props, {}> {
                     helperText="The magnet-link of the recipient"
                     className={classes.textField}
                     InputLabelProps={{shrink: true,}}
+                    disabled={!stream_connected || sending}
                     margin="normal"
                     fullWidth
                 />
@@ -78,6 +92,7 @@ class send extends React.Component<Props, {}> {
                             className: classes.menu,
                         },
                     }}
+                    disabled={!stream_connected || sending}
                     helperText="Please select the unit"
                     margin="normal"
                     fullWidth
@@ -98,17 +113,40 @@ class send extends React.Component<Props, {}> {
                     helperText="The amount of iotas to send"
                     className={classes.textField}
                     InputLabelProps={{shrink: true,}}
+                    disabled={!stream_connected || sending}
                     margin="normal"
                     fullWidth
                 />
 
-                <Button variant="outlined" color="primary" disabled={form_state !== FormState.Ok}
-                        className={classes.button}>
-                    Send
+                <Button variant="outlined" color="primary"
+                        disabled={form_state !== FormState.Ok || !stream_connected || sending}
+                        className={classes.button} onClick={this.send}>
+                    {sending ?
+                        send_state === -1 ?  "WAITING" : <span>{stateTypeToString[send_state]}</span>
+                        :
+                        "Send"
+                    }
                 </Button>
 
                 {sending && <LinearProgress className={classes.progressBar}/>}
-            </div>
+
+                <Dialog
+                    open={send_state === SendRecType.SentOff}
+                    maxWidth={"md"}
+                >
+                    <DialogTitle >{"Transaction Sent"}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                            Your transaction has been sent off with the tail {tail}.
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={this.resetSendState} color="primary">
+                            Ok
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </React.Fragment>
         );
     }
 }

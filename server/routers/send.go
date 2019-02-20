@@ -9,7 +9,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/luca-moser/sigma/server/controllers"
-	"github.com/luca-moser/sigma/server/models"
 	"time"
 )
 
@@ -48,20 +47,18 @@ var (
 
 func (router *SendStreamRouter) Init() {
 
-	g := router.R.Group("/stream/send")
-
-	g.Use(middleware.JWTWithConfig(router.JWTConfig))
-	g.Use(onlyAuth)
-	g.Use(onlyConfirmed)
-
-	g.GET("/", func(c echo.Context) error {
-		claims := c.Get("claims").(*models.UserJWTClaims)
-		tuple, err := router.AccCtrl.Get(claims.UserID.Hex())
+	router.R.GET("/stream/send", func(c echo.Context) error {
+		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			return err
 		}
 
-		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+		userID, err := authWS(ws, router.JWTConfig.SigningKey)
+		if err != nil {
+			return err
+		}
+
+		tuple, err := router.AccCtrl.Get(userID)
 		if err != nil {
 			return err
 		}
@@ -104,6 +101,7 @@ func (router *SendStreamRouter) Init() {
 			sendMessage(&msg{Type: byte(SentOff), Data: bndl})
 		})
 
+		ws.SetReadDeadline(time.Time{})
 		for {
 			m := &msg{}
 			if err := ws.ReadJSON(m); err != nil {

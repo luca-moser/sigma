@@ -2,9 +2,18 @@ body {
   box-sizing: border-box;
 }
 
+p{
+  text-wrap: normal;
+}
+
 .container {
   position: relative;
   margin-top: 100px;
+  box-sizing: border-box !important;
+}
+
+.button {
+  width: 200px;
 }
 
 .loginButton {
@@ -15,6 +24,7 @@ body {
 }
 
 .defaultPaperBox {
+  width: 600px;
   padding: 10px;
   box-sizing: border-box;
 }
@@ -34,4 +44,64 @@ body {
 
 .errorText {
   color: red !important;
+}
+
+.logoutButton {
+  position: relative;
+}
+
+.title {
+  flex-grow: 1;
+}
+
+.loggedInUserInfo {
+  padding-right: 30px;
+}
+
+.titleLogo {
+  display: inline-block;
+  vertical-align: -4px;
+  width: 25px;
+  margin-left: 5px;
+}
+
+.dashboard {
+  flex-grow: 1;
+  margin-top: 100px !important;
+
+  .tile {
+    height: 500px;
+    width: 500px;
+    padding: 10px;
+    overflow: hidden;
+  }
+
+  .splitDivider {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+}
+
+.addrsList {
+  height: 200px;
+  overflow-y: scroll;
+}
+
+.addrsListTitle {
+  font-weight: bold;
+}
+
+.genLink {
+  display: block;
+  position: relative;
+  margin-top: 20px !important;
+  background: #efefef;
+  padding: 10px;
+  word-wrap: break-word;
+}
+
+.linkCopyButton{
+  margin-top: 10px !important;
+  display: inline;
 }

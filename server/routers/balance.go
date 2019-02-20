@@ -1,13 +1,13 @@
 package routers
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/iotaledger/iota.go/account/event/listener"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/luca-moser/sigma/server/controllers"
-	"github.com/luca-moser/sigma/server/models"
 	"time"
 )
 
@@ -31,20 +31,18 @@ type balanceres struct {
 
 func (router *BalanceStreamRouter) Init() {
 
-	g := router.R.Group("/stream/balance")
-
-	g.Use(middleware.JWTWithConfig(router.JWTConfig))
-	g.Use(onlyAuth)
-	g.Use(onlyConfirmed)
-
-	g.GET("/", func(c echo.Context) error {
-		claims := c.Get("claims").(*models.UserJWTClaims)
-		tuple, err := router.AccCtrl.Get(claims.UserID.Hex())
+	router.R.GET("/stream/balance", func(c echo.Context) error {
+		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			return err
 		}
 
-		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+		userID, err := authWS(ws, router.JWTConfig.SigningKey)
+		if err != nil {
+			return err
+		}
+
+		tuple, err := router.AccCtrl.Get(userID)
 		if err != nil {
 			return err
 		}
@@ -67,20 +65,33 @@ func (router *BalanceStreamRouter) Init() {
 			if err != nil {
 				return
 			}
-			if err := ws.WriteJSON(&balanceres{avail, total}); err != nil {
-				_ = err
+			data := &msg{Type: byte(Balance), Data: &balanceres{avail, total}}
+			if err := ws.WriteJSON(data); err != nil {
+				// TODO: send down error
 			}
 		}
 
+		lis.RegInternalErrors(func(err error) {
+			fmt.Println(err)
+		})
+
 		lis.RegSentTransfers(func(bndl bundle.Bundle) {
-			sendBalance()
+			// TODO: find a better way to unblock
+			go sendBalance()
 		})
 
 		lis.RegReceivedDeposits(func(bndl bundle.Bundle) {
-			sendBalance()
+			// TODO: find a better way to unblock
+			go sendBalance()
 		})
 
 		sendBalance()
+		ws.SetReadDeadline(time.Time{})
+		for {
+			if err := ws.ReadJSON(&msg{}); err != nil {
+				break
+			}
+		}
 		return nil
 	})
 

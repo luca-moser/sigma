@@ -38,6 +38,7 @@ export class Loaded extends React.Component<Props, {}> {
             <Switch>
                 <Route exact path="/login" component={LoginMask}/>
                 <Route exact path="/register" component={RegisterMask}/>
+                <Route exact path="/activate/:userID/:code" component={RegisterMask}/>
                 <Route component={Dashboard}/>
             </Switch>
         );

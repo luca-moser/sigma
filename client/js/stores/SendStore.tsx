@@ -1,8 +1,8 @@
-import {action, observable, runInAction} from 'mobx';
+import {action, observable} from 'mobx';
 import {createWebSocket, validMagnetLink} from "../misc/Utils";
 import {Message} from "../misc/Message";
 
-enum RecType {
+export enum SendRecType {
     SelectingInputs,
     PreparingTransfers,
     GettingTransactionsToApprove,
@@ -35,14 +35,14 @@ class Req {
     }
 }
 
-export let stateTypeToString = new Map([
-    [-1, ""],
-    [RecType.SelectingInputs, "selecting inputs"],
-    [RecType.PreparingTransfers, "preparing transfers"],
-    [RecType.GettingTransactionsToApprove, "getting tips"],
-    [RecType.AttachingToTangle, "doing PoW"],
-    [RecType.SentOff, "sent off"],
-]);
+export let stateTypeToString = {
+    [-1]: "",
+    [SendRecType.SelectingInputs]: "selecting inputs",
+    [SendRecType.PreparingTransfers]: "preparing transfers",
+    [SendRecType.GettingTransactionsToApprove]: "getting tips",
+    [SendRecType.AttachingToTangle]: "doing PoW",
+    [SendRecType.SentOff]: "sent off",
+};
 
 export const unitMap = {
     "i": "Iotas",
@@ -65,50 +65,73 @@ export class SendStore {
     @observable amount: number = 0;
     @observable unit: string = defaultSize;
     @observable link: string = "";
-    @observable send_state: RecType = -1;
+    @observable send_state: SendRecType = -1;
+    @observable tail: string = "";
     @observable sending: boolean = false;
     @observable form_state = FormState.Empty;
+
+    @observable stream_connected: boolean;
     ws: WebSocket;
-    stream_connected: boolean;
 
     constructor() {
-        this.connect();
+
     }
 
     connect() {
-        this.ws = createWebSocket("/stream/send");
-        this.ws.onopen = () => runInAction(() => {
-            this.stream_connected = true;
-        });
-        this.ws.onclose = () => runInAction(() => {
-            this.stream_connected = false;
-        });
-        this.ws.onmessage = (e: MessageEvent) => {
-            let msg: Message = JSON.parse(e.data);
-            switch (msg.type) {
-                case RecType.SentOff:
-                    this.resetSending();
-                    break;
-                case RecType.Error:
-                    this.resetSending();
-                    break;
-                default:
-                    this.updateSendState(msg.type);
+        this.ws = createWebSocket("/stream/send", {
+            onAuthSuccess: () => {
+                this.updateStreamConnected(true);
+            },
+            onAuthFailure: () => {
+                this.updateStreamConnected(false);
+            },
+            onMessage: (msg: Message) => {
+                switch (msg.type) {
+                    case SendRecType.SentOff:
+                        this.updateTail(msg.data[0].hash);
+                        this.updateSendState(msg.type);
+                        this.resetSending();
+                        break;
+                    case SendRecType.Error:
+                        this.resetSending();
+                        break;
+                    default:
+                        this.updateSendState(msg.type);
+                }
+            },
+            onClose: (e: CloseEvent) => {
+                this.updateStreamConnected(false);
+            },
+            onError: (e: Event) => {
+                this.updateStreamConnected(false);
             }
-        };
+        });
+    }
+
+    @action
+    updateStreamConnected = (connected: boolean) => {
+        this.stream_connected = connected;
     }
 
     @action
     send = () => {
         if (!this.stream_connected) return;
         this.sending = true;
-        let req = new SendReq(this.amount, this.link);
-        let msg = new Req(ReqType.Send, req);
+        let msg = new Req(ReqType.Send, JSON.stringify(new SendReq(this.amount, this.link)));
         this.ws.send(JSON.stringify(msg));
     }
 
     @action
+    resetSendState = () => {
+        this.tail = "";
+        this.send_state = -1;
+    }
+
+    @action
     resetSending = () => this.sending = false;
+
+    @action
+    updateTail = (tail: string) => this.tail = tail;
 
     @action
     updateSendState = (state: any) => this.send_state = state;

@@ -4,15 +4,19 @@ import (
 	"github.com/iotaledger/iota.go/account"
 	"github.com/iotaledger/iota.go/account/builder"
 	"github.com/iotaledger/iota.go/account/event"
+	"github.com/iotaledger/iota.go/account/event/listener"
 	"github.com/iotaledger/iota.go/account/plugins/promoter"
 	"github.com/iotaledger/iota.go/account/plugins/transfer/poller"
 	mongostore "github.com/iotaledger/iota.go/account/store/mongo"
 	"github.com/iotaledger/iota.go/account/timesrc"
 	"github.com/iotaledger/iota.go/api"
+	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/consts"
 	"github.com/iotaledger/iota.go/pow"
 	"github.com/luca-moser/sigma/server/misc"
+	"github.com/luca-moser/sigma/server/models"
 	"github.com/luca-moser/sigma/server/server/config"
+	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/pkg/errors"
 	"gopkg.in/inconshreveable/log15.v2"
 	"net/http"
@@ -23,6 +27,8 @@ import (
 type AccCtrl struct {
 	Config     *config.Configuration `inject:""`
 	UC         *UserCtrl             `inject:""`
+	Mongo      *mongo.Client         `inject:""`
+	Coll       *mongo.Collection
 	IOTAAPI    *api.API
 	Store      *mongostore.MongoStore
 	TimeSource timesrc.TimeSource
@@ -40,6 +46,9 @@ type AccountTuple struct {
 func (ac *AccCtrl) Init() error {
 	var err error
 	conf := ac.Config
+
+	dbName := ac.Config.Mongo.DBName
+	ac.Coll = ac.Mongo.Database(dbName).Collection("history")
 
 	// init logger
 	ac.logger, _ = misc.GetLogger("acc")
@@ -64,6 +73,8 @@ func (ac *AccCtrl) Init() error {
 
 	// init NTP time source
 	ac.TimeSource = timesrc.NewNTPTimeSource(conf.Account.NTPServer)
+
+	ac.loaded = make(map[string]AccountTuple)
 	return nil
 }
 
@@ -108,7 +119,27 @@ func (ac *AccCtrl) Get(userID string) (*AccountTuple, error) {
 		// TODO: wrap
 		return nil, err
 	}
+
+	// register event handler for history saving
+	lis := listener.NewCallbackEventListener(em)
+	lis.RegReceivingDeposits(func(bndl bundle.Bundle) {
+		ac.storeHistory(userID, bndl, models.HistoryReceiving)
+	})
+	lis.RegReceivedDeposits(func(bndl bundle.Bundle) {
+		ac.storeHistory(userID, bndl, models.HistoryReceived)
+	})
+	lis.RegSentTransfers(func(bndl bundle.Bundle) {
+		ac.storeHistory(userID, bndl, models.HistorySending)
+	})
+	lis.RegConfirmedTransfers(func(bndl bundle.Bundle) {
+		ac.storeHistory(userID, bndl, models.HistorySent)
+	})
+
 	tuple = AccountTuple{acc, em, b.Settings()}
 	ac.loaded[userID] = tuple
 	return &tuple, nil
+}
+
+func (ac *AccCtrl) storeHistory(userID string, bundle bundle.Bundle, ty models.HistoryItemType) error {
+	return nil
 }

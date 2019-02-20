@@ -1,8 +1,52 @@
 import {isValidChecksum} from '@iota/checksum';
+import {tokenKey} from "../stores/UserStore";
+import {runInAction} from "mobx";
+import {Message} from "./Message";
 
-export function createWebSocket(endpoint): WebSocket {
+type OnMessageFunction = (e: Message) => void;
+type OnAuthSuccess = () => void;
+type OnAuthFailure = () => void;
+type OnCloseFunction = (e: CloseEvent) => void;
+type OnErrorFunction = (e: Event) => void;
+
+export interface WSCallbacks {
+    onAuthSuccess: OnAuthSuccess;
+    onAuthFailure: OnAuthFailure;
+    onMessage: OnMessageFunction;
+    onClose: OnCloseFunction;
+    onError: OnErrorFunction;
+}
+
+class AuthWSMsg {
+    auth: boolean;
+}
+
+export function createWebSocket(endpoint, cbs?: WSCallbacks): WebSocket {
     let wsProtocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
-    return new WebSocket(`${wsProtocol}${location.host}${endpoint}`);
+    let ws = new WebSocket(`${wsProtocol}${location.host}${endpoint}`);
+    let authenticated = false;
+    ws.onopen = () => runInAction(() => {
+        let token = localStorage.getItem(tokenKey);
+        ws.send(JSON.stringify({token}));
+    });
+    ws.onmessage = (e: MessageEvent) => {
+        // first message is auth
+        if (!authenticated) {
+            let authMsg: AuthWSMsg = JSON.parse(e.data);
+            if (authMsg.auth) {
+                cbs.onAuthSuccess();
+                authenticated = true;
+            } else {
+                cbs.onAuthFailure();
+                ws.close();
+            }
+            return
+        }
+        cbs.onMessage(JSON.parse(e.data));
+    };
+    ws.onerror = (e: Event) => cbs.onError(e);
+    ws.onclose = (e: CloseEvent) => cbs.onClose(e);
+    return ws;
 }
 
 enum LinkKeys {
@@ -66,7 +110,8 @@ export function validateEmail(email: string) {
 }
 
 const whitespaceRegex = /^\S*$/;
-export function hasNoWhitespace(s: string){
+
+export function hasNoWhitespace(s: string) {
     return whitespaceRegex.test(s);
 }
 

@@ -42,14 +42,8 @@ type historyitem struct {
 }
 
 func (router *HistoryStreamRouter) Init() {
-
-	g := router.R.Group("/stream/history")
-
-	g.Use(middleware.JWTWithConfig(router.JWTConfig))
-	g.Use(onlyAuth)
-	g.Use(onlyConfirmed)
-
-	g.GET("/", func(c echo.Context) error {
+	
+	router.R.GET("/stream/history", func(c echo.Context) error {
 		claims := c.Get("claims").(*models.UserJWTClaims)
 		tuple, err := router.AccCtrl.Get(claims.UserID.Hex())
 		if err != nil {

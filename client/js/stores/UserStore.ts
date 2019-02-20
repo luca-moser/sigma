@@ -43,7 +43,19 @@ let loginErrorText = {
     [LoginError.WrongPassword]: "Wrong password.",
 }
 
-const tokenKey = "token";
+export enum ActivationError {
+    None,
+    Unknown,
+    AlreadyConfirmed = "already confirmed",
+    InvalidCode = "invalid confirmation code"
+}
+
+let activationErrorText = {
+    [ActivationError.AlreadyConfirmed]: "Account has already been confirmed.",
+    [ActivationError.InvalidCode]: "Activation code is invalid.",
+}
+
+export const tokenKey = "token";
 
 export class User {
     id: string;
@@ -91,6 +103,11 @@ export class UserStore {
     @observable registering: boolean = false;
     @observable registered: boolean = false;
 
+    // account activation
+    @observable account_activated: boolean = false;
+    @observable acc_activation_error = ActivationError.None;
+    @observable acc_activation_error_text: string = "";
+
     constructor() {
         this.verifyStoredToken();
     }
@@ -113,8 +130,9 @@ export class UserStore {
                 this.updateLoaded(true);
                 return;
             }
+            let user: User = await req.json();
             let claims: UserJWTClaims = jwtDecode(token);
-            this.updateUsername(claims.username);
+            this.updateUsername(user.username);
             this.updateAuth(true);
         } catch (err) {
             this.updateLoadError(err);
@@ -140,13 +158,23 @@ export class UserStore {
                 return;
             }
             let data: LoginRes = await res.json();
-            console.log("storing jwt token into local storage");
-            localStorage.setItem(tokenKey, JSON.stringify(data.token));
+            localStorage.setItem(tokenKey, data.token);
+            let claims: UserJWTClaims = jwtDecode(data.token);
+            this.updateUsername(claims.username);
             this.updateAuth(true);
         } catch (err) {
             this.updateLoginError(LoginError.Unknown, err);
         }
         this.updateLoggingIn(false);
+    }
+
+    @action
+    logout = () => {
+        localStorage.removeItem(tokenKey);
+        this.authenticated = false;
+        this.username = "";
+        this.login_email = "";
+        this.login_password = "";
     }
 
     register = async () => {
@@ -159,9 +187,9 @@ export class UserStore {
         });
         try {
             this.updateRegistering(true);
-            let req = await fetch(Routes.REGISTER, fetchOpts(registration));
-            if (req.status !== 200) {
-                let errorText = await req.text();
+            let res = await fetch(Routes.REGISTER, fetchOpts(registration));
+            if (res.status !== 200) {
+                let errorText = await res.text();
                 if (errorText.includes(RegisterError.UsernameTaken)) {
                     this.updateRegistrationError(RegisterError.UsernameTaken, registerErrorText[RegisterError.UsernameTaken]);
                 } else if (errorText.includes(RegisterError.EmailTaken)) {
@@ -177,6 +205,36 @@ export class UserStore {
             this.updateRegistrationError(RegisterError.Unknown, err);
         }
         this.updateRegistering(false);
+    }
+
+    activateAccount = async (userID: string, code: string) => {
+        try {
+            let res = await fetch(`/user/code/${userID}/${code}`);
+            if (res.status !== 200) {
+                let errorText = await res.text();
+                if (errorText.includes(ActivationError.AlreadyConfirmed)) {
+                    this.updateActivationError(ActivationError.AlreadyConfirmed, activationErrorText[ActivationError.AlreadyConfirmed]);
+                } else if (errorText.includes(ActivationError.InvalidCode)) {
+                    this.updateActivationError(ActivationError.InvalidCode, activationErrorText[ActivationError.InvalidCode]);
+                } else {
+                    this.updateActivationError(ActivationError.Unknown, errorText);
+                }
+                return;
+            }
+            let data: LoginRes = await res.json();
+            localStorage.setItem(tokenKey, data.token);
+            let claims: UserJWTClaims = jwtDecode(data.token);
+            this.updateUsername(claims.username);
+            this.updateAccountActivated(true);
+            this.updateAuth(true);
+        } catch (err) {
+            this.updateActivationError(ActivationError.Unknown, err);
+        }
+    }
+
+    @action
+    updateAccountActivated = (activated: boolean) => {
+        this.account_activated = activated;
     }
 
     @computed get loginFormState(): LoginFormState {
@@ -215,6 +273,12 @@ export class UserStore {
             return RegisterFormState.PasswordMismatch;
         }
         return RegisterFormState.Ok;
+    }
+
+    @action
+    updateActivationError = (err: ActivationError, text: string) => {
+        this.acc_activation_error = err;
+        this.acc_activation_error_text = text;
     }
 
     @action

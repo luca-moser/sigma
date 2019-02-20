@@ -41,6 +41,11 @@ export class RegisterMask extends React.Component<Props, {}> {
         this.props.userStore.register();
     }
 
+    registerViaEnterKey = (e) => {
+        if (e.key !== "Enter" || this.props.userStore.registerFormState !== RegisterFormState.Ok) return;
+        this.props.userStore.register();
+    }
+
     render() {
         let {
             register_email, register_username, register_password,
@@ -69,7 +74,6 @@ export class RegisterMask extends React.Component<Props, {}> {
             );
         }
 
-
         return (
             <div className={css.container}>
                 <Grid container justify="center" spacing={32}>
@@ -92,6 +96,7 @@ export class RegisterMask extends React.Component<Props, {}> {
                                 placeholder=""
                                 helperText="no whitespace, min. 4 characters"
                                 onChange={this.updateUsername}
+                                onKeyDown={this.registerViaEnterKey}
                                 error={
                                     registerFormState === RegisterFormState.InvalidUsername ||
                                     register_error === RegisterError.UsernameTaken
@@ -107,6 +112,7 @@ export class RegisterMask extends React.Component<Props, {}> {
                                 value={register_email}
                                 placeholder=""
                                 onChange={this.updateEmail}
+                                onKeyDown={this.registerViaEnterKey}
                                 error={
                                     registerFormState === RegisterFormState.InvalidEmail ||
                                     register_error === RegisterError.EmailTaken
@@ -122,6 +128,7 @@ export class RegisterMask extends React.Component<Props, {}> {
                                 helperText="no whitespace, min. 4 characters"
                                 value={register_password}
                                 onChange={this.updatePassword}
+                                onKeyDown={this.registerViaEnterKey}
                                 error={
                                     registerFormState === RegisterFormState.InvalidPassword ||
                                     registerFormState === RegisterFormState.PasswordMismatch
@@ -137,6 +144,7 @@ export class RegisterMask extends React.Component<Props, {}> {
                                 label="Password Confirmation"
                                 value={register_password_conf}
                                 onChange={this.updatePasswordConf}
+                                onKeyDown={this.registerViaEnterKey}
                                 error={
                                     registerFormState === RegisterFormState.InvalidPasswordConf ||
                                     registerFormState === RegisterFormState.PasswordMismatch

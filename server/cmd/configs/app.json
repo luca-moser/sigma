@@ -6,8 +6,8 @@
     "mwm": 14,
     "gtta_depth": 3,
     "security_level": 2,
-    "transfer_poll_interval": 90,
-    "promote_reattach_interval": 90,
+    "transfer_poll_interval": 15,
+    "promote_reattach_interval": 60,
     "address_validity_timeout_days": 3,
     "node": "https://node-x.iota-tangle.io:14268",
     "ntp_server": "time.google.com"
@@ -37,13 +37,13 @@
   },
   "mail": {
     "host": "mail.gandi.net",
-    "username": "mail@sigma.io",
+    "username": "sigma@iota-tangle.io",
     "password": "replaceme",
     "port": 587,
-    "sender": "wallet@sigma.io"
+    "sender": "sigma@iota-tangle.io"
   },
   "links": {
-    "activation": "https://sigma.io/activate/%s/%s",
-    "password_reset": "https://sigma.io/pw/reset/%s/%s"
+    "activation": "https://sigma.iota-tangle.io/activate/%s/%s",
+    "password_reset": "https://sigma.iota-tangle.io/pw/reset/%s/%s"
   }
 }

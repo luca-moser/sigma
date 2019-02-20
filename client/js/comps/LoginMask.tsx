@@ -29,6 +29,11 @@ export class LoginMask extends React.Component<Props, {}> {
         this.props.userStore.updateLoginPassword(e.target.value);
     }
 
+    loginViaEnterKey = (e) => {
+        if (e.key !== "Enter" || this.props.userStore.loginFormState !== LoginFormState.Ok) return;
+        this.props.userStore.login();
+    }
+
     render() {
         let {
             login_email, login_password, loginFormState, logging_in,
@@ -57,6 +62,7 @@ export class LoginMask extends React.Component<Props, {}> {
                                 label="Email"
                                 value={login_email}
                                 onChange={this.updateEmail}
+                                onKeyDown={this.loginViaEnterKey}
                                 InputLabelProps={{shrink: true,}}
                                 margin="normal"
                                 error={
@@ -71,6 +77,7 @@ export class LoginMask extends React.Component<Props, {}> {
                                 label="Password"
                                 value={login_password}
                                 onChange={this.updatePassword}
+                                onKeyDown={this.loginViaEnterKey}
                                 InputLabelProps={{shrink: true,}}
                                 error={
                                     loginFormState === LoginFormState.InvalidPassword ||

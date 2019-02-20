@@ -14,22 +14,36 @@ class BalanceUpdate {
 export class BalanceStore {
     @observable available: number = 0;
     @observable total: number = 0;
-
-    constructor() {
-        this.connect();
-    }
+    @observable stream_connected: boolean;
+    ws: WebSocket;
 
     connect() {
-        let ws = createWebSocket("/stream/balance");
-        ws.onmessage = (e: MessageEvent) => {
-            let msg: Message = JSON.parse(e.data);
-            switch (msg.type) {
-                case RecType.Balance:
-                    this.updateBalance(msg.data);
-                    break;
-                default:
+        this.ws = createWebSocket("/stream/balance", {
+            onAuthSuccess: () => {
+                this.updateStreamConnected(true);
+            },
+            onAuthFailure: () => {
+                this.updateStreamConnected(false);
+            },
+            onMessage: (msg: Message) => {
+                switch (msg.type) {
+                    case RecType.Balance:
+                        this.updateBalance(msg.data);
+                        break;
+                }
+            },
+            onClose: (e: CloseEvent) => {
+                this.updateStreamConnected(false);
+            },
+            onError: (e: Event) => {
+                this.updateStreamConnected(false);
             }
-        };
+        });
+    }
+
+    @action
+    updateStreamConnected = (connected: boolean) => {
+        this.stream_connected = connected;
     }
 
     @action
