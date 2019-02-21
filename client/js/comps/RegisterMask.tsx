@@ -52,7 +52,7 @@ export class RegisterMask extends React.Component<Props, {}> {
             this.updateReCaptcha(null);
             return;
         }
-        this.updateReCaptcha(v);
+        this.props.userStore.updateReCaptcha(v);
     }
 
     render() {

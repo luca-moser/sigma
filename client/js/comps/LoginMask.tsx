@@ -37,10 +37,10 @@ export class LoginMask extends React.Component<Props, {}> {
 
     updateReCaptcha = (v) => {
         if(v === null) {
-            this.updateReCaptcha(null);
+            this.props.userStore.updateReCaptcha(null);
             return;
         }
-        this.updateReCaptcha(v);
+        this.props.userStore.updateReCaptcha(v);
     }
 
     render() {
