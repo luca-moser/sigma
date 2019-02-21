@@ -20,7 +20,7 @@ export class Balance extends React.Component<Props, {}> {
                     Balance
                 </Typography>
                 <Typography variant="subtitle1">
-                    Total: {total} iotas (available: {available} iotas)
+                    Total: {available} iotas (blocked: {total - available} iotas)
                 </Typography>
 
             </div>

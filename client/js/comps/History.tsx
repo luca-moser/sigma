@@ -20,9 +20,16 @@ export class History extends React.Component<Props, {}> {
                 <Typography variant="subtitle2" gutterBottom>
                     History {items.size === 0 ? '' : `(${items.size})`}
                 </Typography>
-                <List className={css.history}>
-                    {listItems}
-                </List>
+                {
+                    items.size === 0 ?
+                        <Typography component="p" gutterBottom>
+                            There are no history items to display yet.
+                        </Typography>
+                    :
+                    <List className={css.history}>
+                        {listItems}
+                    </List>
+                }
             </div>
         );
     }

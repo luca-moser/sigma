@@ -89,8 +89,8 @@ func (router *AddressStreamRouter) Init() {
 					// TODO: send down error
 					break
 				}
-				plusOneHour := now.Add(time.Duration(1) * time.Hour)
-				req := &deposit.Request{TimeoutAt: &plusOneHour, MultiUse: true}
+				thirdyMinutes := now.Add(time.Duration(30) * time.Minute)
+				req := &deposit.Request{TimeoutAt: &thirdyMinutes, MultiUse: true}
 				conds, err := tuple.Account.AllocateDepositRequest(req)
 				if err != nil {
 					// TODO: send down error

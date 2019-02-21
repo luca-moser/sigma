@@ -8,7 +8,18 @@ export enum SendRecType {
     GettingTransactionsToApprove,
     AttachingToTangle,
     SentOff,
-    Error
+    SendError
+}
+
+export enum SendError {
+    Empty,
+    Unknown,
+    InsufficientBalance = "insufficient balance",
+}
+
+export let sendErrorToString = {
+    [SendError.Unknown]: "unknown error",
+    [SendError.InsufficientBalance]: "insufficient balance",
 }
 
 enum ReqType {
@@ -69,6 +80,7 @@ export class SendStore {
     @observable tail: string = "";
     @observable sending: boolean = false;
     @observable form_state = FormState.Empty;
+    @observable send_error = SendError.Empty;
 
     @observable stream_connected: boolean;
     ws: WebSocket;
@@ -92,7 +104,14 @@ export class SendStore {
                         this.updateSendState(msg.type);
                         this.resetSending();
                         break;
-                    case SendRecType.Error:
+                    case SendRecType.SendError:
+                        let err: string = msg.data;
+                        if (err.includes(SendError.InsufficientBalance)) {
+                            this.updateSendError(SendError.InsufficientBalance);
+                        } else {
+                            console.error(msg.data);
+                            this.updateSendError(SendError.Unknown);
+                        }
                         this.resetSending();
                         break;
                     default:
@@ -119,6 +138,16 @@ export class SendStore {
         this.sending = true;
         let msg = new Req(ReqType.Send, JSON.stringify(new SendReq(this.amount, this.link)));
         this.ws.send(JSON.stringify(msg));
+    }
+
+    @action
+    updateSendError = (err: SendError) => {
+        this.send_error = err;
+    }
+
+    @action
+    resetSendError = () => {
+        this.send_error = SendError.Empty;
     }
 
     @action
@@ -150,8 +179,11 @@ export class SendStore {
     }
 
     @action
-    updateAmount = (amount: number) => {
-        this.amount = amount;
+    updateAmount = (amount: string) => {
+        if(!amount){
+            return;
+        }
+        this.amount = parseInt(amount);
     }
 
     @action

@@ -195,9 +195,6 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 			if tx.Value >= 0 {
 				continue
 			}
-			if _, ok := addrs[tx.Address]; !ok {
-				continue
-			}
 			if !guards.IsEmptyTrytes(tx.SignatureMessageFragment) {
 				msg = tx.SignatureMessageFragment
 			}
@@ -240,8 +237,8 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 			toRemove = append(toRemove, i)
 		}
 	}
-	for _, index := range toRemove {
-		funcs = append(funcs[:index], funcs[index+1:]...)
+	for i, index := range toRemove {
+		funcs = append(funcs[:index-i], funcs[index-i+1:]...)
 	}
 
 	return nil

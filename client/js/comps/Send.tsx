@@ -5,13 +5,22 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Button from '@material-ui/core/Button';
-import {FormState, SendRecType, SendStore, stateTypeToString, unitMap} from "../stores/SendStore";
+import {
+    FormState,
+    SendError,
+    sendErrorToString,
+    SendRecType,
+    SendStore,
+    stateTypeToString,
+    unitMap
+} from "../stores/SendStore";
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import Snackbar from '@material-ui/core/Snackbar';
 
 const styles = createStyles({
     button: {
@@ -52,9 +61,13 @@ class send extends React.Component<Props, {}> {
         this.props.sendStore.resetSendState();
     }
 
+    resetSendError = () => {
+        this.props.sendStore.resetSendError();
+    }
+
     render() {
         let {classes} = this.props;
-        let {unit, amount, link, form_state, sending, send_state, stream_connected, tail} = this.props.sendStore;
+        let {unit, amount, link, form_state, sending, send_state, send_error, stream_connected, tail} = this.props.sendStore;
         return (
             <React.Fragment>
                 <Typography variant="h5" gutterBottom>
@@ -122,7 +135,7 @@ class send extends React.Component<Props, {}> {
                         disabled={form_state !== FormState.Ok || !stream_connected || sending}
                         className={classes.button} onClick={this.send}>
                     {sending ?
-                        send_state === -1 ?  "WAITING" : <span>{stateTypeToString[send_state]}</span>
+                        send_state === -1 ? "WAITING" : <span>{stateTypeToString[send_state]}</span>
                         :
                         "Send"
                     }
@@ -134,7 +147,7 @@ class send extends React.Component<Props, {}> {
                     open={send_state === SendRecType.SentOff}
                     maxWidth={"md"}
                 >
-                    <DialogTitle >{"Transaction Sent"}</DialogTitle>
+                    <DialogTitle>{"Transaction Sent"}</DialogTitle>
                     <DialogContent>
                         <DialogContentText id="alert-dialog-description">
                             Your transaction has been sent off with the tail {tail}.
@@ -146,6 +159,17 @@ class send extends React.Component<Props, {}> {
                         </Button>
                     </DialogActions>
                 </Dialog>
+
+                <Snackbar
+                    open={send_error !== SendError.Empty}
+                    onClose={this.resetSendError}
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'center',
+                    }}
+                    autoHideDuration={5000}
+                    message={<span>Error: {sendErrorToString[send_error]}</span>}
+                />
             </React.Fragment>
         );
     }

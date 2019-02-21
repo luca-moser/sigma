@@ -47,7 +47,9 @@ export class App extends React.Component<Props, {}> {
                     </Toolbar>
                 </AppBar>
 
-                <Loaded/>
+                <div style={{padding: 20}}>
+                    <Loaded/>
+                </div>
                 {__DEVELOPMENT__ && <DevTools/>}
             </div>
         );

@@ -44,9 +44,9 @@ type HistoryItemType byte
 const (
 	HistoryReceiving HistoryItemType = iota
 	HistoryReceived
-	HistoryMessage
 	HistorySending
 	HistorySent
+	HistoryMessage
 )
 
 type HistoryItem struct {

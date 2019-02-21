@@ -86,7 +86,7 @@ class AddressList extends React.Component<Props, {}> {
                     <ListItemIcon><SvgIcon><ScheduleOutlined/></SvgIcon></ListItemIcon>
                     <ListItemText
                         primary={`${value.address.substring(0, 15)}...`}
-                        secondary={`valid until ${dateformat(value.timeout_at, "dd.mm.yyyy HH:MM:ss")}`}
+                        secondary={`usable for funding after ${dateformat(value.timeout_at, "dd.mm.yyyy HH:MM:ss")}`}
                     />
                 </ListItem>
             )

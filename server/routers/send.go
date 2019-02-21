@@ -28,7 +28,7 @@ const (
 	GettingTransactionsToApprove
 	AttachingToTangle
 	SentOff
-	Error
+	SendError
 )
 
 type SendReq byte
@@ -118,15 +118,21 @@ func (router *SendStreamRouter) Init() {
 				if err := json.Unmarshal([]byte(m.Data.(string)), req); err != nil {
 					break
 				}
+
 				conds, err := deposit.ParseMagnetLink(req.Link)
 				if err != nil {
-					// TODO: send down error
+					mu.Lock()
+					ws.WriteJSON(&msg{Type: byte(SendError), Data: err.Error()})
+					mu.Unlock()
 					break
 				}
+
 				recipient := conds.AsTransfer()
 				recipient.Value = req.Amount
 				if _, err := tuple.Account.Send(recipient); err != nil {
-					// TODO: send down error
+					mu.Lock()
+					ws.WriteJSON(&msg{Type: byte(SendError), Data: err.Error()})
+					mu.Unlock()
 					break
 				}
 			}
