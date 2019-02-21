@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/luca-moser/sigma/server/controllers"
+	"sync"
 	"time"
 )
 
@@ -72,7 +73,10 @@ func (router *SendStreamRouter) Init() {
 			return nil
 		})
 
+		mu := sync.Mutex{}
 		sendMessage := func(data *msg) {
+			mu.Lock()
+			defer mu.Unlock()
 			if err := ws.WriteJSON(data); err != nil {
 				_ = err
 			}

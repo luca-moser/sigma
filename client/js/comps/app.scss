@@ -73,7 +73,7 @@ p{
     height: 500px;
     width: 500px;
     padding: 10px;
-    overflow: hidden;
+    overflow: hidden !important;
   }
 
   .splitDivider {
@@ -84,7 +84,7 @@ p{
 }
 
 .addrsList {
-  height: 200px;
+  height: 300px;
   overflow-y: scroll;
 }
 
@@ -104,4 +104,18 @@ p{
 .linkCopyButton{
   margin-top: 10px !important;
   display: inline;
+}
+
+.receive {
+  color: #008040 !important;
+}
+
+.sent {
+  color: #e6096a !important;
+}
+
+.history{
+  overflow-y: scroll;
+  height: 300px;
+  padding-bottom: 50px !important;
 }

@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/dgrijalva/jwt-go"
+	"github.com/iotaledger/iota.go/trinary"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"time"
 )
@@ -34,7 +35,8 @@ type UserJWTClaims struct {
 }
 
 type History struct {
-	ID primitive.ObjectID `json:"_id"`
+	ID    primitive.ObjectID           `json:"_id"`
+	Items map[trinary.Hash]HistoryItem `json:"items"`
 }
 
 type HistoryItemType byte
@@ -42,11 +44,14 @@ type HistoryItemType byte
 const (
 	HistoryReceiving HistoryItemType = iota
 	HistoryReceived
+	HistoryMessage
 	HistorySending
 	HistorySent
 )
 
 type HistoryItem struct {
-	Amount uint64          `json:"amount"`
-	Type   HistoryItemType `json:"type"`
+	Amount  int64           `json:"amount"`
+	Type    HistoryItemType `json:"type"`
+	Date    time.Time       `json:"date"`
+	Message trinary.Trytes  `json:"message"`
 }

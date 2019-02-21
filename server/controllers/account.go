@@ -12,11 +12,16 @@ import (
 	"github.com/iotaledger/iota.go/api"
 	"github.com/iotaledger/iota.go/bundle"
 	"github.com/iotaledger/iota.go/consts"
+	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/pow"
+	"github.com/iotaledger/iota.go/trinary"
 	"github.com/luca-moser/sigma/server/misc"
 	"github.com/luca-moser/sigma/server/models"
 	"github.com/luca-moser/sigma/server/server/config"
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
 	"github.com/pkg/errors"
 	"gopkg.in/inconshreveable/log15.v2"
 	"net/http"
@@ -25,16 +30,18 @@ import (
 )
 
 type AccCtrl struct {
-	Config     *config.Configuration `inject:""`
-	UC         *UserCtrl             `inject:""`
-	Mongo      *mongo.Client         `inject:""`
-	Coll       *mongo.Collection
-	IOTAAPI    *api.API
-	Store      *mongostore.MongoStore
-	TimeSource timesrc.TimeSource
-	logger     log15.Logger
-	loadedMu   sync.Mutex
-	loaded     map[string]AccountTuple
+	Config               *config.Configuration `inject:""`
+	UC                   *UserCtrl             `inject:""`
+	Mongo                *mongo.Client         `inject:""`
+	Coll                 *mongo.Collection
+	IOTAAPI              *api.API
+	Store                *mongostore.MongoStore
+	TimeSource           timesrc.TimeSource
+	logger               log15.Logger
+	loadedMu             sync.Mutex
+	loaded               map[string]AccountTuple
+	histroyUpdateFuncsMu sync.Mutex
+	historyUpdateFuncs   map[string][]HistoryUpdateCBFunc
 }
 
 type AccountTuple struct {
@@ -75,6 +82,7 @@ func (ac *AccCtrl) Init() error {
 	ac.TimeSource = timesrc.NewNTPTimeSource(conf.Account.NTPServer)
 
 	ac.loaded = make(map[string]AccountTuple)
+	ac.historyUpdateFuncs = make(map[string][]HistoryUpdateCBFunc)
 	return nil
 }
 
@@ -123,16 +131,19 @@ func (ac *AccCtrl) Get(userID string) (*AccountTuple, error) {
 	// register event handler for history saving
 	lis := listener.NewCallbackEventListener(em)
 	lis.RegReceivingDeposits(func(bndl bundle.Bundle) {
-		ac.storeHistory(userID, bndl, models.HistoryReceiving)
+		ac.storeHistory(userID, acc.ID(), bndl, models.HistoryReceiving)
 	})
 	lis.RegReceivedDeposits(func(bndl bundle.Bundle) {
-		ac.storeHistory(userID, bndl, models.HistoryReceived)
+		ac.storeHistory(userID, acc.ID(), bndl, models.HistoryReceived)
+	})
+	lis.RegReceivedMessages(func(bndl bundle.Bundle) {
+		ac.storeHistory(userID, acc.ID(), bndl, models.HistoryMessage)
 	})
 	lis.RegSentTransfers(func(bndl bundle.Bundle) {
-		ac.storeHistory(userID, bndl, models.HistorySending)
+		ac.storeHistory(userID, acc.ID(), bndl, models.HistorySending)
 	})
 	lis.RegConfirmedTransfers(func(bndl bundle.Bundle) {
-		ac.storeHistory(userID, bndl, models.HistorySent)
+		ac.storeHistory(userID, acc.ID(), bndl, models.HistorySent)
 	})
 
 	tuple = AccountTuple{acc, em, b.Settings()}
@@ -140,6 +151,129 @@ func (ac *AccCtrl) Get(userID string) (*AccountTuple, error) {
 	return &tuple, nil
 }
 
-func (ac *AccCtrl) storeHistory(userID string, bundle bundle.Bundle, ty models.HistoryItemType) error {
+func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle, ty models.HistoryItemType) error {
+	depAddrs, err := ac.Store.GetDepositRequests(accID)
+	if err != nil {
+		return err
+	}
+
+	var setts *account.Settings
+	ac.loadedMu.Lock()
+	setts = ac.loaded[userID].Settings
+	ac.loadedMu.Unlock()
+
+	addrs := make(map[trinary.Hash]struct{})
+	for keyIndex, depAddr := range depAddrs {
+		addr, _ := setts.AddrGen(keyIndex, depAddr.SecurityLevel, false)
+		addrs[addr] = struct{}{}
+	}
+
+	bundleHash := bndl[0].Bundle
+	var amount int64
+
+	var msg string
+	switch ty {
+	case models.HistoryReceiving:
+		fallthrough
+	case models.HistoryReceived:
+		for _, tx := range bndl {
+			if tx.Value < 0 {
+				continue
+			}
+			if _, ok := addrs[tx.Address]; !ok {
+				continue
+			}
+			if !guards.IsEmptyTrytes(tx.SignatureMessageFragment) {
+				msg = tx.SignatureMessageFragment
+			}
+			amount += tx.Value
+		}
+	case models.HistorySending:
+		fallthrough
+	case models.HistorySent:
+		for _, tx := range bndl {
+			if tx.Value >= 0 {
+				continue
+			}
+			if _, ok := addrs[tx.Address]; !ok {
+				continue
+			}
+			if !guards.IsEmptyTrytes(tx.SignatureMessageFragment) {
+				msg = tx.SignatureMessageFragment
+			}
+			amount += tx.Value
+		}
+	case models.HistoryMessage:
+		for _, tx := range bndl {
+			if _, ok := addrs[tx.Address]; !ok {
+				continue
+			}
+			if !guards.IsEmptyTrytes(tx.SignatureMessageFragment) {
+				msg = tx.SignatureMessageFragment
+			}
+		}
+	}
+
+	idObj, _ := primitive.ObjectIDFromHex(userID)
+	date := time.Unix(int64(bndl[0].Timestamp), 0)
+	historyItem := &models.HistoryItem{Amount: amount, Type: ty, Date: date, Message: msg}
+	mut := bson.D{{"$set", bson.D{
+		{"items." + bundleHash, historyItem},
+	}}}
+	t := true
+	updateOpts := &options.UpdateOptions{Upsert: &t,}
+	_, err = ac.Coll.UpdateOne(getCtx(), bson.D{{"_id", idObj}}, mut, updateOpts)
+	if err != nil {
+		return err
+	}
+
+	// TODO: make it per user instead of global
+	ac.histroyUpdateFuncsMu.Lock()
+	defer ac.histroyUpdateFuncsMu.Unlock()
+	funcs, has := ac.historyUpdateFuncs[userID]
+	if !has {
+		return nil
+	}
+	toRemove := make([]int, 0)
+	for i, f := range funcs {
+		if remove := f(bundleHash, historyItem); remove {
+			toRemove = append(toRemove, i)
+		}
+	}
+	for _, index := range toRemove {
+		funcs = append(funcs[:index], funcs[index+1:]...)
+	}
+
 	return nil
+}
+
+func (ac *AccCtrl) GetHistory(userID string) (*models.History, error) {
+	idObj, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	res := ac.Coll.FindOne(getCtx(), bson.D{{"_id", idObj}})
+	if res.Err() != nil {
+		return nil, res.Err()
+	}
+
+	history := &models.History{}
+	if err := res.Decode(history); err != nil {
+		return nil, err
+	}
+	return history, nil
+}
+
+type HistoryUpdateCBFunc func(bundleHash trinary.Hash, item *models.HistoryItem) bool
+
+func (ac *AccCtrl) RegisterHistoryUpdateCallback(userID string, f HistoryUpdateCBFunc) {
+	ac.histroyUpdateFuncsMu.Lock()
+	defer ac.histroyUpdateFuncsMu.Unlock()
+	funcs, has := ac.historyUpdateFuncs[userID]
+	if !has {
+		funcs = make([]HistoryUpdateCBFunc, 0)
+	}
+	funcs = append(funcs, f)
+	ac.historyUpdateFuncs[userID] = funcs
 }

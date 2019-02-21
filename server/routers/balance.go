@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/luca-moser/sigma/server/controllers"
+	"sync"
 	"time"
 )
 
@@ -56,6 +57,7 @@ func (router *BalanceStreamRouter) Init() {
 			return nil
 		})
 
+		mu := sync.Mutex{}
 		sendBalance := func() {
 			avail, err := tuple.Account.AvailableBalance()
 			if err != nil {
@@ -66,6 +68,8 @@ func (router *BalanceStreamRouter) Init() {
 				return
 			}
 			data := &msg{Type: byte(Balance), Data: &balanceres{avail, total}}
+			mu.Lock()
+			defer mu.Unlock()
 			if err := ws.WriteJSON(data); err != nil {
 				// TODO: send down error
 			}

@@ -17,3 +17,6 @@ export const addrsList: string;
 export const addrsListTitle: string;
 export const genLink: string;
 export const linkCopyButton: string;
+export const receive: string;
+export const sent: string;
+export const history: string;

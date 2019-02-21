@@ -38,7 +38,7 @@ export class dashboard extends React.Component<Props, {}> {
         this.props.sendStore.connect();
         this.props.balStore.connect();
         this.props.addrsStore.connect();
-        //this.props.historyStore.connect();
+        this.props.historyStore.connect();
     }
 
     handleActivationMessageClose = () => {

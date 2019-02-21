@@ -2,8 +2,7 @@ package routers
 
 import (
 	"github.com/gorilla/websocket"
-	"github.com/iotaledger/iota.go/account/event/listener"
-	"github.com/iotaledger/iota.go/bundle"
+	"github.com/iotaledger/iota.go/trinary"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/luca-moser/sigma/server/controllers"
@@ -21,75 +20,55 @@ type HistoryStreamRouter struct {
 type HistoryRec byte
 
 const (
-	Init HistoryRec = iota
-	NewHistoryItem
+	HistoryInit HistoryRec = iota
+	HistoryNewItem
 )
 
-type HistoryItemType byte
-
-const (
-	HistoryReceiving HistoryItemType = iota
-	HistoryReceived
-	HistorySending
-	HistorySent
-)
-
-type historyitem struct {
-	Tail   string          `json:"tail"`
-	Bundle string          `json:"bundle"`
-	Amount uint64          `json:"amount"`
-	Type   HistoryItemType `json:"type"`
+type historynewitemmsg struct {
+	Bundle string              `json:"bundle"`
+	Item   *models.HistoryItem `json:"item"`
 }
 
 func (router *HistoryStreamRouter) Init() {
-	
-	router.R.GET("/stream/history", func(c echo.Context) error {
-		claims := c.Get("claims").(*models.UserJWTClaims)
-		tuple, err := router.AccCtrl.Get(claims.UserID.Hex())
-		if err != nil {
-			return err
-		}
 
+	router.R.GET("/stream/history", func(c echo.Context) error {
 		ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 		if err != nil {
 			return err
 		}
 
-		lis := listener.NewCallbackEventListener(tuple.EventMachine)
+		userID, err := authWS(ws, router.JWTConfig.SigningKey)
+		if err != nil {
+			return err
+		}
 
 		ws.SetCloseHandler(func(code int, text string) error {
 			message := websocket.FormatCloseMessage(code, "")
 			ws.WriteControl(websocket.CloseMessage, message, time.Now().Add(time.Second))
-			lis.Close()
 			return nil
 		})
 
-		sendMessage := func(data *msg) {
-			if err := ws.WriteJSON(data); err != nil {
-				_ = err
+		currentHistory, err := router.AccCtrl.GetHistory(userID)
+		if err == nil {
+			if err := ws.WriteJSON(&msg{Type: byte(HistoryInit), Data: currentHistory}); err != nil {
+				return err
 			}
 		}
 
-		// TODO: send down the correct amount
-		build := func(ty HistoryItemType, bndl bundle.Bundle) *historyitem {
-			return &historyitem{Type: ty, Bundle: bndl[0].Bundle, Tail: bndl[0].Hash}
+		router.AccCtrl.RegisterHistoryUpdateCallback(userID, func(bundleHash trinary.Trytes, item *models.HistoryItem) bool {
+			m := &msg{Type: byte(HistoryNewItem), Data: historynewitemmsg{bundleHash, item}}
+			if err := ws.WriteJSON(m); err != nil {
+				return true
+			}
+			return false
+		})
+
+		ws.SetReadDeadline(time.Time{})
+		for {
+			if err := ws.ReadJSON(&msg{}); err != nil {
+				break
+			}
 		}
-
-		lis.RegReceivingDeposits(func(bndl bundle.Bundle) {
-			sendMessage(&msg{Type: byte(NewHistoryItem), Data: build(HistoryReceiving, bndl)})
-		})
-
-		lis.RegReceivedDeposits(func(bndl bundle.Bundle) {
-			sendMessage(&msg{Type: byte(NewHistoryItem), Data: build(HistoryReceived, bndl)})
-		})
-
-		lis.RegSentTransfers(func(bndl bundle.Bundle) {
-			sendMessage(&msg{Type: byte(NewHistoryItem), Data: build(HistorySending, bndl)})
-		})
-
-		lis.RegConfirmedTransfers(func(bndl bundle.Bundle) {
-			sendMessage(&msg{Type: byte(NewHistoryItem), Data: build(HistorySent, bndl)})
-		})
 
 		return nil
 	})
