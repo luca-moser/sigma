@@ -11,6 +11,7 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 
 import * as css from './app.scss';
+import {AccountActivation} from "./AccountActivation";
 
 interface Props {
     userStore?: UserStore;
@@ -38,7 +39,7 @@ export class Loaded extends React.Component<Props, {}> {
             <Switch>
                 <Route exact path="/login" component={LoginMask}/>
                 <Route exact path="/register" component={RegisterMask}/>
-                <Route exact path="/activate/:userID/:code" component={RegisterMask}/>
+                <Route exact path="/activate/:userID/:code" component={AccountActivation}/>
                 <Route component={Dashboard}/>
             </Switch>
         );
