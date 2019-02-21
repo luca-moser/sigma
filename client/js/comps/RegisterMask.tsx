@@ -8,6 +8,7 @@ import {RegisterError, RegisterFormState, UserStore} from "../stores/UserStore";
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import ReCAPTCHA from "react-google-recaptcha";
 import {Link} from 'react-router-dom';
 
 import * as css from './app.scss';
