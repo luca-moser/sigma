@@ -46,13 +46,21 @@ export class RegisterMask extends React.Component<Props, {}> {
         this.props.userStore.register();
     }
 
+    updateReCaptcha = (v) => {
+        if(v === null) {
+            this.updateReCaptcha(null);
+            return;
+        }
+        this.updateReCaptcha(v);
+    }
+
     render() {
         let {
             register_email, register_username, register_password,
             register_password_conf, registerFormState, registering,
             registered, register_error, register_error_text,
         } = this.props.userStore;
-
+        let recaptchaPubKey = document.getElementById("recaptcha-public-key").getAttribute("key");
         if (registered) {
             return (
                 <div className={css.container}>
@@ -163,6 +171,11 @@ export class RegisterMask extends React.Component<Props, {}> {
                                     {register_error_text}
                                 </Typography>
                             }
+
+                            <ReCAPTCHA
+                                sitekey={recaptchaPubKey}
+                                onChange={this.updateReCaptcha}
+                            />
 
                             <Button variant="outlined" color="primary"
                                     onClick={this.props.userStore.register}
