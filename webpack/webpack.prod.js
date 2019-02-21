@@ -61,7 +61,6 @@ module.exports = env => {
         },
 
         plugins: removeEmpty([
-            new UglifyJSPlugin({}),
             new webpack.LoaderOptionsPlugin({
                 minimize: true,
                 debug: false,

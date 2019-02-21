@@ -9,6 +9,7 @@ import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import {Link} from 'react-router-dom';
+import ReCAPTCHA from "react-google-recaptcha";
 
 import * as css from './app.scss';
 
@@ -34,6 +35,14 @@ export class LoginMask extends React.Component<Props, {}> {
         this.props.userStore.login();
     }
 
+    updateReCaptcha = (v) => {
+        if(v === null) {
+            this.updateReCaptcha(null);
+            return;
+        }
+        this.updateReCaptcha(v);
+    }
+
     render() {
         let {
             login_email, login_password, loginFormState, logging_in,
@@ -42,6 +51,7 @@ export class LoginMask extends React.Component<Props, {}> {
         if (authenticated) {
             return <Redirect to="/dashboard"/>;
         }
+        let recaptchaPubKey = document.getElementById("recaptcha-public-key").getAttribute("key");
         return (
             <div className={css.container}>
                 <Grid className={css.container} container justify="center" spacing={32}>
@@ -95,6 +105,11 @@ export class LoginMask extends React.Component<Props, {}> {
                                     {login_error_text}
                                 </Typography>
                             }
+
+                            <ReCAPTCHA
+                                sitekey={recaptchaPubKey}
+                                onChange={this.updateReCaptcha}
+                            />
 
                             <Button variant="outlined" color="primary"
                                     onClick={this.props.userStore.login}

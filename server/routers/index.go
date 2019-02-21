@@ -69,8 +69,9 @@ type Router interface {
 }
 
 type IndexRouter struct {
-	R   *echo.Echo `inject:""`
-	Dev bool       `inject:"dev"`
+	R                  *echo.Echo `inject:""`
+	Dev                bool       `inject:"dev"`
+	ReCaptchaPublicKey string     `inject:"recaptcha_public_key"`
 }
 
 func (indexRouter *IndexRouter) Init() {
@@ -160,5 +161,5 @@ func (indexRouter *IndexRouter) indexRoute(c echo.Context) error {
 		}
 		return c.HTML(http.StatusOK, string(htmlData))
 	}
-	return c.Render(http.StatusOK, "index.html", nil)
+	return c.Render(http.StatusOK, "index.html", struct{ Key string }{indexRouter.ReCaptchaPublicKey})
 }

@@ -122,7 +122,6 @@ export class HistoryStore {
                         send = true;
                         if (item.amount < 0) {
                             styling = css.sent;
-                            sign = "-";
                         }
                         break;
                 }

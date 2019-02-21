@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/dpapathanasiou/go-recaptcha"
 	"github.com/facebookgo/inject"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -117,6 +118,9 @@ func (server *Server) Start() {
 		SigningKey: []byte(conf.JWT.PrivateKey),
 	}
 
+	// recaptcha
+	recaptcha.Init(conf.ReCaptcha.PrivateKey)
+
 	// create injection graph for automatic dependency injection
 	g := inject.Graph{}
 
@@ -126,6 +130,8 @@ func (server *Server) Start() {
 		&inject.Object{Value: mongoClient},
 		&inject.Object{Value: conf},
 		&inject.Object{Value: conf.Dev, Name: "dev"},
+		&inject.Object{Value: conf.ReCaptcha.PublicKey, Name: "recaptcha_public_key"},
+		&inject.Object{Value: conf.ReCaptcha.PrivateKey, Name: "recaptcha_private_key"},
 		&inject.Object{Value: authJWTConf, Name: "jwt_config_user"},
 		&inject.Object{Value: mailTemplates, Name: "mail_templates"},
 	); err != nil {

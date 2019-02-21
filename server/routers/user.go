@@ -15,11 +15,11 @@ import (
 )
 
 type UserRouter struct {
-	R         *echo.Echo            `inject:""`
-	UC        *controllers.UserCtrl `inject:""`
-	Dev       bool                  `inject:"dev"`
-	Config    *config.Configuration `inject:""`
-	JWTConfig middleware.JWTConfig  `inject:"jwt_config_user"`
+	R                   *echo.Echo            `inject:""`
+	UC                  *controllers.UserCtrl `inject:""`
+	Dev                 bool                  `inject:"dev"`
+	Config              *config.Configuration `inject:""`
+	JWTConfig           middleware.JWTConfig  `inject:"jwt_config_user"`
 }
 
 type logincredentials struct {

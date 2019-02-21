@@ -1,3 +1,4 @@
+declare var __DEVELOPMENT__;
 import {action, computed, observable} from 'mobx';
 import {FetchConst, fetchOpts, hasNoWhitespace, Routes, validateEmail} from "../misc/Utils";
 import jwtDecode from 'jwt-decode';
@@ -6,7 +7,8 @@ export enum LoginFormState {
     Empty,
     Ok,
     InvalidEmail,
-    InvalidPassword
+    InvalidPassword,
+    MissingReCaptcha,
 }
 
 export enum RegisterFormState {
@@ -17,6 +19,7 @@ export enum RegisterFormState {
     InvalidPassword,
     InvalidPasswordConf,
     PasswordMismatch,
+    MissingReCaptcha,
 }
 
 export enum RegisterError {
@@ -92,6 +95,7 @@ export class UserStore {
     @observable login_error = LoginError.None;
     @observable login_error_text: string = "";
     @observable logging_in: boolean = false;
+    @observable recaptcha: string = "";
 
     // register form
     @observable register_password: string = "";
@@ -141,7 +145,11 @@ export class UserStore {
     }
 
     login = async () => {
-        let credentials = JSON.stringify({email: this.login_email, password: this.login_password});
+        let credentials = JSON.stringify({
+            email: this.login_email,
+            password: this.login_password,
+            recaptcha: this.recaptcha,
+        });
         try {
             this.updateLoggingIn(true);
             let res = await fetch(Routes.LOGIN, fetchOpts(credentials));
@@ -182,8 +190,7 @@ export class UserStore {
             username: this.register_username,
             email: this.register_email,
             password: this.register_password,
-            // TODO: add
-            recaptcha: "",
+            recaptcha: this.recaptcha,
         });
         try {
             this.updateRegistering(true);
@@ -238,7 +245,7 @@ export class UserStore {
     }
 
     @computed get loginFormState(): LoginFormState {
-        if (!this.login_email && !this.login_password) {
+        if (!this.login_email && !this.login_password && !this.recaptcha) {
             return LoginFormState.Empty;
         }
         if (!validateEmail(this.login_email)) {
@@ -247,6 +254,9 @@ export class UserStore {
         if (!hasNoWhitespace(this.login_password) || this.login_password.length < 4) {
             return LoginFormState.InvalidPassword;
         }
+        if (!__DEVELOPMENT__ && !this.recaptcha) {
+            return LoginFormState.MissingReCaptcha;
+        }
         return LoginFormState.Ok;
     }
 
@@ -254,7 +264,8 @@ export class UserStore {
         if (!this.register_username &&
             !this.register_password &&
             !this.register_password_conf &&
-            !this.register_email) {
+            !this.register_email &&
+            !this.recaptcha) {
             return RegisterFormState.Empty;
         }
         if (!hasNoWhitespace(this.register_username) || this.register_username.length < 4) {
@@ -272,7 +283,15 @@ export class UserStore {
         if (this.register_password !== this.register_password_conf) {
             return RegisterFormState.PasswordMismatch;
         }
+        if (!__DEVELOPMENT__ && !this.recaptcha) {
+            return RegisterFormState.MissingReCaptcha;
+        }
         return RegisterFormState.Ok;
+    }
+
+    @action
+    updateReCaptcha(val: string) {
+        this.recaptcha = val;
     }
 
     @action

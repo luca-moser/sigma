@@ -9,9 +9,8 @@ RUN mkdir -p /app/assets/css && mkdir -p /app/assets/html \
 RUN mkdir -p /app/configs && mkdir -p /app/logs
 
 # copy server assets
-COPY server/cmd/srv                         /app/srv
-COPY server/cmd/configs/app.prod.json       /app/configs/app.json
-COPY server/cmd/configs/network.prod.json   /app/configs/network.json
+COPY server/cmd/sigma                   /app/sigma
+COPY server/cmd/configs/app.prod.json   /app/configs/app.json
 
 # copy client assets
 COPY client/css/*           /app/assets/css/
@@ -24,4 +23,4 @@ WORKDIR /app
 EXPOSE 9000
 
 # entrypoint
-ENTRYPOINT ["/app/srv"]
+ENTRYPOINT ["/app/sigma"]

@@ -1,6 +1,6 @@
 {
-  "name": "app",
-  "dev": true,
+  "name": "sigma",
+  "dev": false,
   "verbose": true,
   "account": {
     "mwm": 14,

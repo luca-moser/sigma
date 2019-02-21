@@ -90,6 +90,7 @@ class send extends React.Component<Props, {}> {
                     InputLabelProps={{shrink: true,}}
                     disabled={!stream_connected || sending}
                     margin="normal"
+                    variant="outlined"
                     fullWidth
                 />
 
@@ -108,6 +109,7 @@ class send extends React.Component<Props, {}> {
                     disabled={!stream_connected || sending}
                     helperText="Please select the unit"
                     margin="normal"
+                    variant="outlined"
                     fullWidth
                 >
                     {Object.keys(unitMap).map(key => {
@@ -128,6 +130,7 @@ class send extends React.Component<Props, {}> {
                     InputLabelProps={{shrink: true,}}
                     disabled={!stream_connected || sending}
                     margin="normal"
+                    variant="outlined"
                     fullWidth
                 />
 

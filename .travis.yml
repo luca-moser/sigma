@@ -1,0 +1,25 @@
+language: go
+go: "1.11.5"
+
+if: tag IS present
+
+env:
+  - GO111MODULE=on
+
+install: true
+
+notifications:
+  email: false
+
+script:
+  - npm i
+  - npm run build:prod
+  - cd ./server/cmd
+  - GOOS=linux GOARCH=amd64 go build --tags="pow_avx" -ldflags="-s -w" -v -o sigma
+  - md5sum sigma
+  - cd ./../..
+
+after_script:
+  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+  - docker build -t lucamoser/sigma:$TRAVIS_TAG .
+  - docker push lucamoser/sigma:$TRAVIS_TAG
