@@ -127,6 +127,20 @@ func (router *SendStreamRouter) Init() {
 					break
 				}
 
+				ok, info, err := router.AccCtrl.SendOracle.OkToSend(conds)
+				if err != nil {
+					mu.Lock()
+					ws.WriteJSON(&msg{Type: byte(SendError), Data: err.Error()})
+					mu.Unlock()
+					break
+				}
+				if !ok {
+					mu.Lock()
+					ws.WriteJSON(&msg{Type: byte(SendError), Data: info})
+					mu.Unlock()
+					break
+				}
+
 				recipient := conds.AsTransfer()
 				recipient.Value = req.Amount
 				if _, err := tuple.Account.Send(recipient); err != nil {

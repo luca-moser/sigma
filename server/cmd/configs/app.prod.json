@@ -1,6 +1,6 @@
 {
-  "name": "app",
-  "dev": false,
+  "name": "sigma",
+  "dev": true,
   "verbose": true,
   "account": {
     "mwm": 14,
@@ -10,7 +10,13 @@
     "promote_reattach_interval": 60,
     "address_validity_timeout_days": 3,
     "node": "https://node-x.iota-tangle.io:14268",
-    "ntp_server": "time.google.com"
+    "ntp_server": "time.google.com",
+    "send": {
+      "timeout_before_threshold": 15,
+      "conf_box_url": "http://88.99.60.78:15265",
+      "conf_rate_avg_mode": 15,
+      "conf_rate_avg_threshold": 0.6
+    }
   },
   "mongo": {
     "uri": "mongodb://localhost:27017",

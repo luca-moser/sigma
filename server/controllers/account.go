@@ -5,6 +5,8 @@ import (
 	"github.com/iotaledger/iota.go/account/builder"
 	"github.com/iotaledger/iota.go/account/event"
 	"github.com/iotaledger/iota.go/account/event/listener"
+	"github.com/iotaledger/iota.go/account/oracle"
+	time2 "github.com/iotaledger/iota.go/account/oracle/time"
 	"github.com/iotaledger/iota.go/account/plugins/promoter"
 	"github.com/iotaledger/iota.go/account/plugins/transfer/poller"
 	mongostore "github.com/iotaledger/iota.go/account/store/mongo"
@@ -15,6 +17,7 @@ import (
 	"github.com/iotaledger/iota.go/guards"
 	"github.com/iotaledger/iota.go/pow"
 	"github.com/iotaledger/iota.go/trinary"
+	"github.com/luca-moser/confbox/oraclesrc"
 	"github.com/luca-moser/sigma/server/misc"
 	"github.com/luca-moser/sigma/server/models"
 	"github.com/luca-moser/sigma/server/server/config"
@@ -42,6 +45,7 @@ type AccCtrl struct {
 	loaded               map[string]AccountTuple
 	histroyUpdateFuncsMu sync.Mutex
 	historyUpdateFuncs   map[string][]HistoryUpdateCBFunc
+	SendOracle           oracle.SendOracle
 }
 
 type AccountTuple struct {
@@ -83,6 +87,32 @@ func (ac *AccCtrl) Init() error {
 
 	ac.loaded = make(map[string]AccountTuple)
 	ac.historyUpdateFuncs = make(map[string][]HistoryUpdateCBFunc)
+
+	// init send oracle
+	sendConf := ac.Config.Account.Send
+	timedecider := time2.NewTimeDecider(ac.TimeSource, time.Duration(sendConf.TimeoutBeforeThreshold)*time.Minute)
+
+	var avgMode oraclesrc.AvgMode
+	switch sendConf.ConfRateAvgMode {
+	case 5:
+		avgMode = oraclesrc.AvgMode5Min
+	case 10:
+		avgMode = oraclesrc.AvgMode10Min
+	case 15:
+		avgMode = oraclesrc.AvgMode15Min
+	case 30:
+		avgMode = oraclesrc.AvgMode30Min
+	default:
+		avgMode = oraclesrc.AvgMode15Min
+	}
+
+	if sendConf.ConfRateAvgThreshold < 0.6 {
+		sendConf.ConfRateAvgThreshold = 0.6
+	}
+
+	confRateDecider := oraclesrc.NewConfBoxDecider(sendConf.ConfBoxURL, ac.TimeSource, sendConf.ConfRateAvgThreshold, avgMode)
+	ac.SendOracle = oracle.New(timedecider, confRateDecider)
+
 	return nil
 }
 

@@ -15,11 +15,19 @@ export enum SendError {
     Empty,
     Unknown,
     InsufficientBalance = "insufficient balance",
+    ConfRateBelowThreshold = "below set threshold",
+    ConfRateLinkBelowThreshold = "CDR timeout",
+    LinkExpired = "conditions expired",
+    LinkTimeoutBelowThreshold = "conditions will have expired",
 }
 
 export let sendErrorToString = {
     [SendError.Unknown]: "unknown error",
     [SendError.InsufficientBalance]: "insufficient balance",
+    [SendError.ConfRateBelowThreshold]: "network conf. rate is too low currently",
+    [SendError.ConfRateLinkBelowThreshold]: "link will expire too soon, requesta new one from the recipient",
+    [SendError.LinkExpired]: "the link has expired, request a new one from the recipient",
+    [SendError.LinkTimeoutBelowThreshold]: "link will expire too soon, requesta new one from the recipient",
 }
 
 enum ReqType {
@@ -104,6 +112,14 @@ export class SendStore {
                         let err: string = msg.data;
                         if (err.includes(SendError.InsufficientBalance)) {
                             this.updateSendError(SendError.InsufficientBalance);
+                        } else if (err.includes(SendError.ConfRateBelowThreshold)) {
+                            this.updateSendError(SendError.ConfRateBelowThreshold);
+                        } else if (err.includes(SendError.ConfRateLinkBelowThreshold)) {
+                            this.updateSendError(SendError.ConfRateLinkBelowThreshold);
+                        } else if (err.includes(SendError.LinkExpired)) {
+                            this.updateSendError(SendError.LinkExpired);
+                        } else if (err.includes(SendError.LinkTimeoutBelowThreshold)) {
+                            this.updateSendError(SendError.LinkTimeoutBelowThreshold);
                         } else {
                             console.error(msg.data);
                             this.updateSendError(SendError.Unknown);

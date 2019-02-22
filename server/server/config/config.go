@@ -43,6 +43,12 @@ type AccountConfig struct {
 	PromoteReattachInterval    uint64 `json:"promote_reattach_interval"`
 	AddressValidityTimeoutDays uint64 `json:"address_validity_timeout_days"`
 	NTPServer                  string `json:"ntp_server"`
+	Send                       struct {
+		TimeoutBeforeThreshold uint64  `json:"timeout_before_threshold"`
+		ConfBoxURL             string  `json:"conf_box_url"`
+		ConfRateAvgMode        uint64 `json:"conf_rate_avg_mode"`
+		ConfRateAvgThreshold   float64 `json:"conf_rate_avg_threshold"`
+	}
 }
 
 type MongoConfig struct {
