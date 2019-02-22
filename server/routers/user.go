@@ -83,7 +83,7 @@ func (ur *UserRouter) Init() {
 		}
 
 		// check whether deactivated
-		if user.Deactivated {
+		if user.Deactivated || !user.Confirmed {
 			return controllers.ErrInvalidModel
 		}
 

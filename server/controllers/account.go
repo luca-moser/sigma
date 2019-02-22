@@ -219,8 +219,6 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 			amount += tx.Value
 		}
 	case models.HistorySending:
-		fallthrough
-	case models.HistorySent:
 		for _, tx := range bndl {
 			_, remainder := addrs[tx.Address];
 			if tx.Value >= 0 && !remainder {
@@ -231,6 +229,7 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 			}
 			amount += tx.Value
 		}
+	case models.HistorySent:
 	case models.HistoryMessage:
 		for _, tx := range bndl {
 			if _, ok := addrs[tx.Address]; !ok {
