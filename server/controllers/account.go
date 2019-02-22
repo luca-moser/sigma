@@ -203,9 +203,9 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 
 	var msg string
 	switch ty {
-	case models.HistoryReceiving:
-		fallthrough
 	case models.HistoryReceived:
+		fallthrough
+	case models.HistoryReceiving:
 		for _, tx := range bndl {
 			if tx.Value < 0 {
 				continue
@@ -229,7 +229,6 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 			}
 			amount += tx.Value
 		}
-	case models.HistorySent:
 	case models.HistoryMessage:
 		for _, tx := range bndl {
 			if _, ok := addrs[tx.Address]; !ok {
@@ -243,13 +242,36 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 
 	idObj, _ := primitive.ObjectIDFromHex(userID)
 	date := time.Unix(int64(bndl[0].Timestamp), 0)
+	var mut bson.D
+	var filter bson.D
 	historyItem := &models.HistoryItem{Amount: amount, Type: ty, Date: date, Message: msg}
-	mut := bson.D{{"$set", bson.D{
-		{"items." + bundleHash, historyItem},
-	}}}
+	if ty == models.HistorySent {
+		mut = bson.D{{"$set", bson.D{
+			{"items." + bundleHash + ".type", ty},
+		}}}
+		filter = bson.D{{"_id", idObj}}
+	} else if ty != models.HistoryReceived {
+		mut = bson.D{
+			{"$set", bson.D{
+				{"items." + bundleHash + ".type", ty},
+			}},
+			{"$setOnInsert", bson.D{
+				{"items." + bundleHash, historyItem},
+			}},
+		}
+		filter = bson.D{
+			{"_id", idObj},
+			{"items." + bundleHash, bson.D{{"$exists", true}}},
+		}
+	} else {
+		mut = bson.D{{"$set", bson.D{
+			{"items." + bundleHash, historyItem},
+		}}}
+		filter = bson.D{{"_id", idObj}}
+	}
 	t := true
 	updateOpts := &options.UpdateOptions{Upsert: &t,}
-	_, err = ac.Coll.UpdateOne(getCtx(), bson.D{{"_id", idObj}}, mut, updateOpts)
+	_, err = ac.Coll.UpdateOne(getCtx(), filter, mut, updateOpts)
 	if err != nil {
 		return err
 	}
