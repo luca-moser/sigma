@@ -222,7 +222,8 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 		fallthrough
 	case models.HistorySent:
 		for _, tx := range bndl {
-			if _, ok := addrs[tx.Address]; !ok {
+			_, remainder := addrs[tx.Address];
+			if tx.Value >= 0 && !remainder {
 				continue
 			}
 			if !guards.IsEmptyTrytes(tx.SignatureMessageFragment) {
