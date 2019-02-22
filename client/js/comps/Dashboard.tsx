@@ -41,6 +41,13 @@ export class dashboard extends React.Component<Props, {}> {
         this.props.historyStore.connect();
     }
 
+    componentWillUnmount(){
+        this.props.sendStore.disconnect();
+        this.props.balStore.disconnect();
+        this.props.addrsStore.disconnect();
+        this.props.historyStore.disconnect();
+    }
+
     handleActivationMessageClose = () => {
         this.props.userStore.updateAccountActivated(false);
     }

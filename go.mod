@@ -11,7 +11,7 @@ require (
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
 	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691 // indirect
 	github.com/gorilla/websocket v1.4.0
-	github.com/iotaledger/iota.go v1.0.0-beta.0.20190220125704-8e8c939ba267
+	github.com/iotaledger/iota.go v1.0.0-beta.0.20190222133328-a8b650e4e302
 	github.com/labstack/echo v3.3.5+incompatible
 	github.com/labstack/gommon v0.2.8 // indirect
 	github.com/mattn/go-colorable v0.0.9

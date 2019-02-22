@@ -1,5 +1,5 @@
 import {action, observable} from 'mobx';
-import {createWebSocket, validMagnetLink} from "../misc/Utils";
+import {createWebSocket, extractExpectedAmount, validMagnetLink} from "../misc/Utils";
 import {Message} from "../misc/Message";
 
 export enum SendRecType {
@@ -64,7 +64,7 @@ export const unitMap = {
 
 const defaultSize = "i";
 
-export enum FormState {
+export enum SendFormState {
     Empty,
     Ok,
     LinkInvalid = "invalid link",
@@ -79,15 +79,11 @@ export class SendStore {
     @observable send_state: SendRecType = -1;
     @observable tail: string = "";
     @observable sending: boolean = false;
-    @observable form_state = FormState.Empty;
+    @observable form_state = SendFormState.Empty;
     @observable send_error = SendError.Empty;
 
     @observable stream_connected: boolean;
     ws: WebSocket;
-
-    constructor() {
-
-    }
 
     connect() {
         this.ws = createWebSocket("/stream/send", {
@@ -125,6 +121,11 @@ export class SendStore {
                 this.updateStreamConnected(false);
             }
         });
+    }
+
+    disconnect = () => {
+        if (!this.stream_connected) return;
+        this.ws.close();
     }
 
     @action
@@ -168,19 +169,23 @@ export class SendStore {
     @action
     updateFormState = () => {
         if (this.link.length === 0) {
-            this.form_state = FormState.Empty;
+            this.form_state = SendFormState.Empty;
             return;
         }
         if (!validMagnetLink(this.link)) {
-            this.form_state = FormState.LinkInvalid;
+            this.form_state = SendFormState.LinkInvalid;
             return;
         }
-        this.form_state = FormState.Ok;
+        if (this.amount < 0) {
+            this.form_state = SendFormState.AmountInvalid;
+            return;
+        }
+        this.form_state = SendFormState.Ok;
     }
 
     @action
     updateAmount = (amount: string) => {
-        if(!amount){
+        if (!amount) {
             return;
         }
         this.amount = parseInt(amount);
@@ -195,6 +200,13 @@ export class SendStore {
     updateLink = (Link: string) => {
         this.link = Link;
         this.updateFormState();
+        if (
+            this.form_state !== SendFormState.LinkInvalid
+            &&
+            this.form_state !== SendFormState.Empty
+        ) {
+            this.amount = extractExpectedAmount(this.link);
+        }
     }
 
 

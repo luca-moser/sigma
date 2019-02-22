@@ -1,6 +1,6 @@
 {
   "name": "sigma",
-  "dev": false,
+  "dev": true,
   "verbose": true,
   "account": {
     "mwm": 14,

@@ -63,7 +63,6 @@ export function validMagnetLink(link: string): boolean {
     try {
         url = new URL(link);
         let address = url.pathname.replace(/\//g, "");
-        console.log(address);
         if (!isValidChecksum(address)) {
             return false;
         }
@@ -81,6 +80,22 @@ export function validMagnetLink(link: string): boolean {
     let expectedAmount = url.searchParams.get(LinkKeys.ExpectedAmount);
     if (!expectedAmount) return true;
     return parseInt(expectedAmount) >= 0;
+}
+
+export function extractExpectedAmount(link: string): number {
+    let url: URL;
+    try {
+        url = new URL(link);
+        let address = url.pathname.replace(/\//g, "");
+        if (!isValidChecksum(address)) {
+            return 0;
+        }
+        let expectedAmountStr = url.searchParams.get(LinkKeys.ExpectedAmount);
+        let expected = parseInt(expectedAmountStr);
+        return expected ? expected : 0;
+    } catch (err) {
+        return 0;
+    }
 }
 
 export enum FetchConst {

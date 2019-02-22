@@ -73,19 +73,19 @@ p{
     height: 500px;
     width: 500px;
     padding: 10px;
-    overflow: hidden !important;
+    overflow-y: auto;
+    overflow-x: hidden !important;
   }
 
   .splitDivider {
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
   }
 
 }
 
 .addrsList {
   height: 300px;
-  overflow-y: scroll;
 }
 
 .addrsListTitle {
@@ -115,7 +115,27 @@ p{
 }
 
 .history{
-  overflow-y: scroll;
-  height: 300px;
   padding-bottom: 50px !important;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  border-radius: 2px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+}
+::-webkit-scrollbar-thumb:window-inactive {
+  background: #3a3a3a;
+}
+
+.addrHelpOutlined {
+  display: inline-block;
+  margin-left: 5px !important;
 }

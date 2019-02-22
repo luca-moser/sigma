@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"fmt"
 	"github.com/iotaledger/iota.go/account/deposit"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -31,6 +32,10 @@ const (
 type newaddress struct {
 	Address interface{} `json:"address"`
 	Link    string      `json:"link"`
+}
+
+type newaddressreq struct {
+	ExpectedAmount uint64 `json:"expected_amount"`
 }
 
 func (router *AddressStreamRouter) Init() {
@@ -84,6 +89,9 @@ func (router *AddressStreamRouter) Init() {
 
 			switch AddressReq(m.Type) {
 			case NewAddress:
+
+				expectedAmount := uint64(m.Data.(float64))
+				fmt.Println(expectedAmount)
 				now, err := router.AccCtrl.TimeSource.Time()
 				if err != nil {
 					// TODO: send down error
@@ -91,6 +99,9 @@ func (router *AddressStreamRouter) Init() {
 				}
 				thirdyMinutes := now.Add(time.Duration(30) * time.Minute)
 				req := &deposit.Request{TimeoutAt: &thirdyMinutes, MultiUse: true}
+				if expectedAmount != 0 {
+					req.ExpectedAmount = &expectedAmount
+				}
 				conds, err := tuple.Account.AllocateDepositRequest(req)
 				if err != nil {
 					// TODO: send down error

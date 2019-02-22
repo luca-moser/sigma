@@ -6,9 +6,9 @@ import TextField from '@material-ui/core/TextField';
 import MenuItem from '@material-ui/core/MenuItem';
 import Button from '@material-ui/core/Button';
 import {
-    FormState,
     SendError,
     sendErrorToString,
+    SendFormState,
     SendRecType,
     SendStore,
     stateTypeToString,
@@ -90,34 +90,10 @@ class send extends React.Component<Props, {}> {
                     InputLabelProps={{shrink: true,}}
                     disabled={!stream_connected || sending}
                     margin="normal"
+                    error={form_state === SendFormState.LinkInvalid}
                     variant="outlined"
                     fullWidth
                 />
-
-                <TextField
-                    id="outlined-select-currency"
-                    select
-                    label="Unit"
-                    className={classes.textField}
-                    value={unit}
-                    onChange={this.updateUnit}
-                    SelectProps={{
-                        MenuProps: {
-                            className: classes.menu,
-                        },
-                    }}
-                    disabled={!stream_connected || sending}
-                    helperText="Please select the unit"
-                    margin="normal"
-                    variant="outlined"
-                    fullWidth
-                >
-                    {Object.keys(unitMap).map(key => {
-                        return <MenuItem key={key} value={key}>
-                            {unitMap[key]}
-                        </MenuItem>
-                    })}
-                </TextField>
 
                 <TextField
                     id="outlined-number"
@@ -135,7 +111,7 @@ class send extends React.Component<Props, {}> {
                 />
 
                 <Button variant="outlined" color="primary"
-                        disabled={form_state !== FormState.Ok || !stream_connected || sending}
+                        disabled={form_state !== SendFormState.Ok || !stream_connected || sending}
                         className={classes.button} onClick={this.send}>
                     {sending ?
                         send_state === -1 ? "WAITING" : <span>{stateTypeToString[send_state]}</span>

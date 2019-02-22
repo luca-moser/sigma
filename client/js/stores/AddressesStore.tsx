@@ -34,6 +34,8 @@ export class AddressesStore {
     @observable generating: boolean = false;
     @observable generated_addr: Address = null;
     @observable generated_link: string = null;
+    @observable expected_amount: number = 0;
+    @observable help_dialog_open: boolean = false;
     ws: WebSocket;
 
     connect() {
@@ -67,6 +69,24 @@ export class AddressesStore {
         });
     }
 
+    disconnect = () => {
+        if (!this.stream_connected) return;
+        this.ws.close();
+    }
+
+    @action
+    updateHelpDialogOpen = (open: boolean) => {
+        this.help_dialog_open = open;
+    }
+
+    @action
+    updateExpectedAmount = (exp: string) => {
+        if (!exp) {
+            exp = "0";
+        }
+        this.expected_amount = parseInt(exp);
+    }
+
     @action
     updateStreamConnected = (connected: boolean) => {
         this.stream_connected = connected;
@@ -79,7 +99,7 @@ export class AddressesStore {
 
     @action
     updateGeneratedLink = (link: string) => {
-        this.generated_link= link;
+        this.generated_link = link;
     }
 
     @action
@@ -91,7 +111,7 @@ export class AddressesStore {
     generateAddress = () => {
         if (!this.stream_connected) return;
         this.generating = true;
-        this.ws.send(JSON.stringify(new Req(ReqType.NewAddress)));
+        this.ws.send(JSON.stringify(new Req(ReqType.NewAddress, this.expected_amount)));
     }
 
     @action

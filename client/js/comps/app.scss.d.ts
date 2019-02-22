@@ -20,3 +20,4 @@ export const linkCopyButton: string;
 export const receive: string;
 export const sent: string;
 export const history: string;
+export const addrHelpOutlined: string;

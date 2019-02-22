@@ -15,6 +15,7 @@ export class BalanceStore {
     @observable available: number = 0;
     @observable total: number = 0;
     @observable stream_connected: boolean;
+    @observable help_dialog_open: boolean = false;
     ws: WebSocket;
 
     connect() {
@@ -39,6 +40,16 @@ export class BalanceStore {
                 this.updateStreamConnected(false);
             }
         });
+    }
+
+    disconnect = () => {
+        if(!this.stream_connected) return;
+        this.ws.close();
+    }
+
+    @action
+    updateHelpDialogOpen = (open: boolean) => {
+        this.help_dialog_open = open;
     }
 
     @action

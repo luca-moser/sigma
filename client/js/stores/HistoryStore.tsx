@@ -55,7 +55,6 @@ export class HistoryStore {
                 this.updateStreamConnected(false);
             },
             onMessage: (msg: Message) => {
-                console.log(msg);
                 switch (msg.type) {
                     case RecType.Init:
                         this.setHistory(msg.data.items);
@@ -73,6 +72,11 @@ export class HistoryStore {
                 this.updateStreamConnected(false);
             }
         });
+    }
+
+    disconnect = () => {
+        if(!this.stream_connected) return;
+        this.ws.close();
     }
 
     @action
