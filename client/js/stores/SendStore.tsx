@@ -106,6 +106,7 @@ export class SendStore {
                     case SendRecType.SentOff:
                         this.updateTail(msg.data[0].hash);
                         this.updateSendState(msg.type);
+                        this.updateLink("");
                         this.resetSending();
                         break;
                     case SendRecType.SendError:

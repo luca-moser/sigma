@@ -137,21 +137,7 @@ export class Addresses extends React.Component<Props, {}> {
 class AddressList extends React.Component<Props, {}> {
 
     render() {
-        let {addrs} = this.props.addrsStore;
-
-        let items = [];
-        for (let [key, value] of addrs) {
-            items.push(
-                <ListItem disableGutters button key={key}>
-                    <ListItemIcon><SvgIcon><ScheduleOutlined/></SvgIcon></ListItemIcon>
-                    <ListItemText
-                        primary={`${value.address.substring(0, 15)}...`}
-                        secondary={`usable for funding after ${dateformat(value.timeout_at, "dd.mm.yyyy HH:MM:ss")}`}
-                    />
-                </ListItem>
-            )
-        }
-
+        let {listItems, addrs} = this.props.addrsStore;
         return (
             <React.Fragment>
                 <Typography variant="subtitle2" gutterBottom>
@@ -169,7 +155,7 @@ class AddressList extends React.Component<Props, {}> {
                                 Your owned deposit addresses which will be used to fund transfers.
                             </Typography>
                             <List dense className={css.addrsList}>
-                                {items}
+                                {listItems}
                             </List>
                         </React.Fragment>
                 }

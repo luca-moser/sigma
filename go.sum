@@ -41,6 +41,14 @@ github.com/iotaledger/iota.go v1.0.0-beta.0.20190220125704-8e8c939ba267 h1:iOlmH
 github.com/iotaledger/iota.go v1.0.0-beta.0.20190220125704-8e8c939ba267/go.mod h1:OFpaGRKHmFlQ8HsuaB4rYX8BOxW9Fm0pDEjrwwTxsX4=
 github.com/iotaledger/iota.go v1.0.0-beta.0.20190222133328-a8b650e4e302 h1:aZvSoM4v8cx8QICHG/QUOUhUz7wwphz7po+WLYjZ5kI=
 github.com/iotaledger/iota.go v1.0.0-beta.0.20190222133328-a8b650e4e302/go.mod h1:OFpaGRKHmFlQ8HsuaB4rYX8BOxW9Fm0pDEjrwwTxsX4=
+github.com/iotaledger/iota.go v1.0.0-beta.0.20190223102155-3d4e8c96a4d7 h1:ZPX2UFFO46iEqypKNdweAN904VmjOBwqWn4ndJGJads=
+github.com/iotaledger/iota.go v1.0.0-beta.0.20190223102155-3d4e8c96a4d7/go.mod h1:OFpaGRKHmFlQ8HsuaB4rYX8BOxW9Fm0pDEjrwwTxsX4=
+github.com/iotaledger/iota.go v1.0.0-beta.0.20190223104303-efcca42a6704 h1:lgVJHLqLT7r+xxUABTx7nVvAqiBAAF+xGEOQ/bzSF6E=
+github.com/iotaledger/iota.go v1.0.0-beta.0.20190223104303-efcca42a6704/go.mod h1:OFpaGRKHmFlQ8HsuaB4rYX8BOxW9Fm0pDEjrwwTxsX4=
+github.com/iotaledger/iota.go v1.0.0-beta.0.20190223105825-55ab38920982 h1:PDK8mUf56lz1JPlZi+jgwmHghQWvV7EqXKJ+4g9lh3M=
+github.com/iotaledger/iota.go v1.0.0-beta.0.20190223105825-55ab38920982/go.mod h1:OFpaGRKHmFlQ8HsuaB4rYX8BOxW9Fm0pDEjrwwTxsX4=
+github.com/iotaledger/iota.go v1.0.0-beta.0.20190223105908-de6807ffaf99 h1:3rTk4QB7/IYTaX6mZj4W4G9u9hXoP5KojNGLBgecwjA=
+github.com/iotaledger/iota.go v1.0.0-beta.0.20190223105908-de6807ffaf99/go.mod h1:OFpaGRKHmFlQ8HsuaB4rYX8BOxW9Fm0pDEjrwwTxsX4=
 github.com/labstack/echo v3.3.5+incompatible h1:9PfxPUmasKzeJor9uQTaXLT6WUG/r+vSTmvXxvv3JO4=
 github.com/labstack/echo v3.3.5+incompatible/go.mod h1:0INS7j/VjnFxD4E2wkz67b8cVwCLbBmJyDaka6Cmk1s=
 github.com/labstack/gommon v0.2.8 h1:JvRqmeZcfrHC5u6uVleB4NxxNbzx6gpbJiQknDbKQu0=

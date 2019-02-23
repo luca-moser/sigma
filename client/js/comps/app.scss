@@ -119,7 +119,7 @@ p{
 }
 
 ::-webkit-scrollbar {
-  width: 3px;
+  width: 2px;
 }
 
 /* Track */
@@ -129,13 +129,13 @@ p{
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #3a3a3a;
+  background: #424242;
 }
 ::-webkit-scrollbar-thumb:window-inactive {
-  background: #3a3a3a;
+  background: #424242;
 }
 
 .addrHelpOutlined {
   display: inline-block;
-  margin-left: 5px !important;
+  margin-left: 3px !important;
 }

@@ -9,7 +9,7 @@
     "transfer_poll_interval": 15,
     "promote_reattach_interval": 60,
     "address_validity_timeout_days": 3,
-    "node": "https://nodes.devnet.iota.org:443",
+    "node": "https://nodes.devnet.thetangle.org:443",
     "ntp_server": "time.google.com",
     "send": {
       "timeout_before_threshold": 15,

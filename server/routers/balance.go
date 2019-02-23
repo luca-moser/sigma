@@ -84,6 +84,11 @@ func (router *BalanceStreamRouter) Init() {
 			go sendBalance()
 		})
 
+		lis.RegConfirmedTransfers(func(bndl bundle.Bundle) {
+			// TODO: find a better way to unblock
+			go sendBalance()
+		})
+
 		lis.RegReceivedDeposits(func(bndl bundle.Bundle) {
 			// TODO: find a better way to unblock
 			go sendBalance()

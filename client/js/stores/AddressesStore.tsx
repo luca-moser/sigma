@@ -1,6 +1,16 @@
-import {action, observable} from 'mobx';
+import * as React from "react";
+import {action, computed, observable} from 'mobx';
 import {createWebSocket} from "../misc/Utils";
 import {Message} from "../misc/Message";
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import SvgIcon from '@material-ui/core/SvgIcon';
+import HelpOutline from '@material-ui/icons/HelpOutline';
+import IconButton from '@material-ui/core/IconButton';
+import ScheduleOutlined from '@material-ui/icons/ScheduleOutlined';
+import {default as dateformat} from 'dateformat';
 
 enum RecType {
     AddressInit,
@@ -25,7 +35,7 @@ class Address {
     address: string;
     timeout_at: string;
     multi_use: boolean;
-    expected_amount: boolean;
+    expected_amount: number;
 }
 
 export class AddressesStore {
@@ -126,6 +136,27 @@ export class AddressesStore {
         this.addrs = observable.map(map);
     }
 
+    @computed get listItems(): Array<JSX.Element> {
+        return Array.from(this.addrs)
+            .sort(([key, value], [key2, value2]) => {
+                return value.timeout_at < value2.timeout_at ? 1 : -1;
+            })
+            .map(([key, addr]) => {
+                let a: Address = addr;
+                let msg = "";
+                if(a.expected_amount > 0){
+                    msg = `usable for funding after receiving ${a.expected_amount} iotas or ${dateformat(a.timeout_at, "dd.mm.yyyy HH:MM:ss")}`;
+                }else{
+                    msg = `usable for funding after ${dateformat(a.timeout_at, "dd.mm.yyyy HH:MM:ss")}`;
+                }
+                return <ListItem disableGutters button key={key}>
+                    <ListItemText
+                        primary={`${a.address.substring(0, 15)}...`}
+                        secondary={msg}
+                    />
+                </ListItem>
+            });
+    }
 }
 
 export var AddressesStoreInstance = new AddressesStore();

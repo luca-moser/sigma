@@ -68,7 +68,7 @@ func (ac *AccCtrl) Init() error {
 	_, powFunc := pow.GetFastestProofOfWorkImpl()
 	iotaAPI, err := api.ComposeAPI(api.HTTPClientSettings{
 		URI: conf.Account.Node, LocalProofOfWorkFunc: powFunc,
-		Client: &http.Client{Timeout: time.Duration(5) * time.Second},
+		Client: &http.Client{Timeout: time.Duration(10) * time.Second},
 	})
 	if err != nil {
 		return errors.Wrap(err, "unable to init IOTA API")
@@ -192,10 +192,10 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 	setts = ac.loaded[userID].Settings
 	ac.loadedMu.Unlock()
 
-	addrs := make(map[trinary.Hash]struct{})
+	ownAddrs := make(map[trinary.Hash]struct{})
 	for keyIndex, depAddr := range depAddrs {
 		addr, _ := setts.AddrGen(keyIndex, depAddr.SecurityLevel, false)
-		addrs[addr] = struct{}{}
+		ownAddrs[addr] = struct{}{}
 	}
 
 	bundleHash := bndl[0].Bundle
@@ -210,7 +210,7 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 			if tx.Value < 0 {
 				continue
 			}
-			if _, ok := addrs[tx.Address]; !ok {
+			if _, ok := ownAddrs[tx.Address]; !ok {
 				continue
 			}
 			if !guards.IsEmptyTrytes(tx.SignatureMessageFragment) {
@@ -218,20 +218,27 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 			}
 			amount += tx.Value
 		}
+	case models.HistorySent:
+		fallthrough
 	case models.HistorySending:
 		for _, tx := range bndl {
-			_, remainder := addrs[tx.Address];
-			if tx.Value >= 0 && !remainder {
+			// inputs
+			if tx.Value < 0 {
+				amount += tx.Value
+				continue
+			}
+			// remainder
+			if _, isRemainder := ownAddrs[tx.Address]; isRemainder {
+				amount += tx.Value
 				continue
 			}
 			if !guards.IsEmptyTrytes(tx.SignatureMessageFragment) {
 				msg = tx.SignatureMessageFragment
 			}
-			amount += tx.Value
 		}
 	case models.HistoryMessage:
 		for _, tx := range bndl {
-			if _, ok := addrs[tx.Address]; !ok {
+			if _, ok := ownAddrs[tx.Address]; !ok {
 				continue
 			}
 			if !guards.IsEmptyTrytes(tx.SignatureMessageFragment) {
@@ -250,19 +257,6 @@ func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle,
 			{"items." + bundleHash + ".type", ty},
 		}}}
 		filter = bson.D{{"_id", idObj}}
-	} else if ty != models.HistoryReceived {
-		mut = bson.D{
-			{"$set", bson.D{
-				{"items." + bundleHash + ".type", ty},
-			}},
-			{"$setOnInsert", bson.D{
-				{"items." + bundleHash, historyItem},
-			}},
-		}
-		filter = bson.D{
-			{"_id", idObj},
-			{"items." + bundleHash, bson.D{{"$exists", true}}},
-		}
 	} else {
 		mut = bson.D{{"$set", bson.D{
 			{"items." + bundleHash, historyItem},

@@ -7,7 +7,7 @@ require (
 	github.com/dpapathanasiou/go-recaptcha v0.0.0-20190121160230-be5090b17804
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
 	github.com/gorilla/websocket v1.4.0
-	github.com/iotaledger/iota.go v1.0.0-beta.0.20190222133328-a8b650e4e302
+	github.com/iotaledger/iota.go v1.0.0-beta.0.20190223105908-de6807ffaf99
 	github.com/labstack/echo v3.3.5+incompatible
 	github.com/luca-moser/confbox v0.0.0-20190211143118-94adffb92d57
 	github.com/mattn/go-colorable v0.0.9

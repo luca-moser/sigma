@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {inject, observer} from 'mobx-react';
-import {createStyles, withStyles} from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import {BalanceStore} from "../stores/BalanceStore";
 import Dialog from '@material-ui/core/Dialog';
@@ -39,7 +38,7 @@ export class Balance extends React.Component<Props, {}> {
                     Balance
                 </Typography>
                 <Typography variant="subtitle1">
-                    Total: {available} iotas (blocked: {total - available} iotas)
+                    Available: {available} iotas (blocked: {total - available} iotas)
                     <IconButton aria-label="Delete" className={css.addrHelpOutlined} onClick={this.openHelpDialog}>
                         <SvgIcon><HelpOutline/></SvgIcon>
                     </IconButton>
@@ -50,6 +49,13 @@ export class Balance extends React.Component<Props, {}> {
                 >
                     <DialogTitle>{"Balance | Help"}</DialogTitle>
                     <DialogContent>
+                        <DialogContentText>
+                            The available balance shows you how many iotas can be used to fund transfers
+                            currently. If you have outgoing pending transactions, the available balance will represent
+                            what is currently available for funding transactions. You could see a
+                            zero balance if all your current iotas are within a transfer, even if you
+                            have a remainder.
+                        </DialogContentText>
                         <DialogContentText>
                             Blocked funds become available once the lifetime of the corresponding
                             deposit address ends. If you want funds to become available immediately
