@@ -5,10 +5,6 @@ import {AddressesStore} from "../stores/AddressesStore";
 import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import ScheduleOutlined from '@material-ui/icons/ScheduleOutlined';
 import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -37,6 +33,10 @@ export class Addresses extends React.Component<Props, {}> {
 
     copyLink = () => {
         copy(this.props.addrsStore.generated_link);
+    }
+
+    copyRawAddress = () => {
+        copy(this.props.addrsStore.generated_addr.address);
     }
 
     updateExpectedAmount = (e) => {
@@ -96,6 +96,11 @@ export class Addresses extends React.Component<Props, {}> {
                             className={css.linkCopyButton} onClick={this.copyLink}
                         >
                             Copy Magnet Link
+                        </Button>
+                        <Button
+                            className={css.linkCopyButton} onClick={this.copyRawAddress}
+                        >
+                            Copy Raw Address
                         </Button>
                     </React.Fragment>
                 }

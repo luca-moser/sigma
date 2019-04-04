@@ -1,4 +1,7 @@
 import {isValidChecksum} from '@iota/checksum';
+import Curl from '@iota/curl';
+import {tritsToTrytes, trytesToTrits, valueToTrits} from '@iota/converter';
+import {padTrits} from '@iota/pad';
 import {tokenKey} from "../stores/UserStore";
 import {runInAction} from "mobx";
 import {Message} from "./Message";
@@ -50,36 +53,89 @@ export function createWebSocket(endpoint, cbs?: WSCallbacks): WebSocket {
 }
 
 enum LinkKeys {
-    Timeout = "t",
-    MultiUse = "m",
-    ExpectedAmount = "am"
+    Timeout = "timeout_at",
+    MultiUse = "multi_use",
+    ExpectedAmount = "expected_amount"
 }
 
-const protocol = "iota://";
+const wantedProtocol = "iota://";
 
 export function validMagnetLink(link: string): boolean {
     if (!link) return false;
+    if (link.substr(0, wantedProtocol.length) != wantedProtocol) {
+        return false;
+    }
+
     let url: URL;
     try {
         url = new URL(link);
-        let address = url.pathname.replace(/\//g, "");
-        if (!isValidChecksum(address)) {
+
+        // generate checksum of address
+        let addressAndCDAChecksum = url.pathname.replace(/\//g, "");
+        let address = addressAndCDAChecksum.substring(0, 81);
+        let addressTrits = trytesToTrits(address);
+        let curl = new Curl();
+        curl.absorb(addressTrits, 0, addressTrits.length);
+        let addressChecksumTrits = new Int8Array(Curl.HASH_LENGTH);
+        curl.squeeze(addressChecksumTrits, 0, Curl.HASH_LENGTH);
+
+        // parse timeout
+        let timeoutStr = url.searchParams.get(LinkKeys.Timeout);
+        let timeoutInt = parseInt(timeoutStr);
+        if (!timeoutInt) {
+            console.error("timeout isn't a number");
             return false;
         }
+        let timeoutTrits = valueToTrits(timeoutInt);
+        let paddedTimeout = padTrits(27)(timeoutTrits);
+
+        // must obviously be after now
+        if (new Date(timeoutInt * 1000).getTime() < new Date().getTime()) {
+            console.error("timeout already hit");
+            return false;
+        }
+
+        let paddedExpectedAmount: Int8Array = null;
+        let expectedAmount = url.searchParams.get(LinkKeys.ExpectedAmount);
+        if (expectedAmount) {
+            let expectedAmountInt = parseInt(expectedAmount);
+            if (!expectedAmountInt && expectedAmountInt !== 0) {
+                console.error("expected amount is not a number");
+                return false;
+            }
+            paddedExpectedAmount = padTrits(81)(valueToTrits(expectedAmountInt));
+        } else {
+            // pad with empty trits
+            paddedExpectedAmount = new Int8Array(81);
+        }
+
+        let multiUseTrits: Int8Array = new Int8Array(1);
+        let multiUse = url.searchParams.get(LinkKeys.MultiUse);
+        if (!multiUse || multiUse === 'false' || multiUse === '0') {
+            multiUseTrits[0] = 0;
+        } else {
+            multiUseTrits[0] = 1;
+        }
+
+        curl.reset();
+
+        let input = new Int8Array(Curl.HASH_LENGTH);
+        input.set(addressChecksumTrits.slice(0, 134), 0);
+        input.set(paddedTimeout, 134);
+        input.set(multiUseTrits, 134 + paddedTimeout.length);
+        input.set(paddedExpectedAmount, 134 + paddedTimeout.length + 1);
+        curl.absorb(input, 0, Curl.HASH_LENGTH);
+
+        let cdaChecksumTrits = new Int8Array(Curl.HASH_LENGTH);
+        curl.squeeze(cdaChecksumTrits, 0, Curl.HASH_LENGTH);
+        let cdaChecksum = tritsToTrytes(cdaChecksumTrits);
+
+        let checksumInLink = addressAndCDAChecksum.slice(81, addressAndCDAChecksum.length);
+        return checksumInLink === cdaChecksum.slice(81 - 9, 81);
     } catch (err) {
+        console.error("error in parsing/validation", err);
         return false;
     }
-    if (link.substr(0, protocol.length) != protocol) {
-        return false;
-    }
-    let timeoutStr = url.searchParams.get(LinkKeys.Timeout);
-    let timeout = new Date(parseInt(timeoutStr) * 10000);
-    if (timeout.getTime() < new Date().getTime()) {
-        return false;
-    }
-    let expectedAmount = url.searchParams.get(LinkKeys.ExpectedAmount);
-    if (!expectedAmount) return true;
-    return parseInt(expectedAmount) >= 0;
 }
 
 export function extractExpectedAmount(link: string): number {

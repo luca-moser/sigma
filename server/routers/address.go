@@ -107,7 +107,12 @@ func (router *AddressStreamRouter) Init() {
 					// TODO: send down error
 					break
 				}
-				data := &newaddress{conds, conds.AsMagnetLink()}
+				link, err := conds.AsMagnetLink()
+				if err != nil {
+					// TODO: send down error
+					break
+				}
+				data := &newaddress{conds, link}
 				if err := ws.WriteJSON(&msg{Type: byte(AddressAdd), Data: data}); err != nil {
 					return err
 				}
