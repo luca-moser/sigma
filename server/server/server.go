@@ -8,15 +8,14 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/luca-moser/sigma/server/controllers"
+	"github.com/luca-moser/sigma/server/misc"
 	"github.com/luca-moser/sigma/server/models"
 	"github.com/luca-moser/sigma/server/routers"
 	"github.com/luca-moser/sigma/server/server/config"
-	"github.com/luca-moser/sigma/server/misc"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/options"
-	"github.com/mongodb/mongo-go-driver/mongo/readconcern"
-	"github.com/mongodb/mongo-go-driver/mongo/writeconcern"
-	"gopkg.in/mgo.v2"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"html/template"
 	"io"
 	"os"
@@ -34,7 +33,6 @@ func (t *TemplateRendered) Render(w io.Writer, name string, data interface{}, c 
 type Server struct {
 	Config    *config.Configuration
 	WebEngine *echo.Echo
-	Mongo     *mgo.Session
 }
 
 func (server *Server) Start() {
@@ -94,12 +92,13 @@ func (server *Server) Start() {
 	rters := []routers.Router{indexRouter, accRouter, userRouter, addrsRouter, balanceRouter, historyRouter}
 
 	// init mongo db conn
-	mongoClient, err := mongo.NewClientWithOptions(server.Config.Mongo.URI, []*options.ClientOptions{
+	mongoClient, err := mongo.NewClient([]*options.ClientOptions{
 		{
 			// TODO: move to config
 			WriteConcern: writeconcern.New(writeconcern.J(true), writeconcern.WMajority(), writeconcern.WTimeout(5*time.Second)),
 			ReadConcern:  readconcern.Majority(),
 		},
+		options.Client().ApplyURI(server.Config.Mongo.URI),
 	}...)
 	mongoConnCtx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	if err := mongoClient.Connect(mongoConnCtx); err != nil {

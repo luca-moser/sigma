@@ -8,11 +8,11 @@ import (
 	"github.com/luca-moser/sigma/server/misc"
 	"github.com/luca-moser/sigma/server/models"
 	"github.com/luca-moser/sigma/server/server/config"
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/options"
-	"github.com/mongodb/mongo-go-driver/x/bsonx"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 	"gopkg.in/gomail.v2"
 	"html/template"
 	mathRand "math/rand"
@@ -225,7 +225,7 @@ func (uc *UserCtrl) GetUserByUsername(username string) (*models.User, error) {
 
 // gets the user by the given email
 func (uc *UserCtrl) GetUserByEmail(email string) (*models.User, error) {
-	countByEmail, err := uc.Coll.Count(getCtx(), bson.D{{"email", email}})
+	countByEmail, err := uc.Coll.CountDocuments(getCtx(), bson.D{{"email", email}})
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +248,7 @@ func (uc *UserCtrl) CreateUser(user *models.User) (*primitive.ObjectID, error) {
 	}
 
 	// check whether email is taken
-	countByEmail, err := uc.Coll.Count(getCtx(), bson.D{{"email", user.Email}})
+	countByEmail, err := uc.Coll.CountDocuments(getCtx(), bson.D{{"email", user.Email}})
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +257,7 @@ func (uc *UserCtrl) CreateUser(user *models.User) (*primitive.ObjectID, error) {
 	}
 
 	// check whether username is taken (case-insensitive)
-	countByUsername, err := uc.Coll.Count(getCtx(), bson.D{{"username", user.Username}}, &options.CountOptions{
+	countByUsername, err := uc.Coll.CountDocuments(getCtx(), bson.D{{"username", user.Username}}, &options.CountOptions{
 		Collation: &options.Collation{
 			Locale: "en", Strength: 2,
 		},

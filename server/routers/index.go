@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/luca-moser/sigma/server/controllers"
 	"github.com/pkg/errors"
-	"gopkg.in/mgo.v2"
+	"go.mongodb.org/mongo-driver/mongo"
 	"io/ioutil"
 	"net/http"
 )
@@ -113,7 +113,7 @@ func (indexRouter *IndexRouter) Init() {
 		// 404 not found
 		case controllers.ErrUserNotFound:
 			fallthrough
-		case mgo.ErrNotFound:
+		case mongo.ErrNoDocuments:
 			statusCode = http.StatusNotFound
 			message = "not found"
 

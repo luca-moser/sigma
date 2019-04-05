@@ -1,5 +1,5 @@
 language: go
-go: "1.11.5"
+go: "1.12.1"
 
 if: tag IS present
 
@@ -15,6 +15,7 @@ script:
   - npm i
   - npm run build:prod
   - cd ./server/cmd
+  - go get ./...
   - GOOS=linux GOARCH=amd64 go build --tags="pow_avx" -ldflags="-s -w" -v -o sigma
   - md5sum sigma
   - cd ./../..
