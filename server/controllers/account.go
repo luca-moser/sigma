@@ -106,8 +106,8 @@ func (ac *AccCtrl) Init() error {
 		avgMode = oraclesrc.AvgMode15Min
 	}
 
-	if sendConf.ConfRateAvgThreshold < 0.6 {
-		sendConf.ConfRateAvgThreshold = 0.6
+	if sendConf.ConfRateAvgThreshold < 0.5 {
+		sendConf.ConfRateAvgThreshold = 0.5
 	}
 
 	confRateDecider := oraclesrc.NewConfBoxDecider(sendConf.ConfBoxURL, ac.TimeSource, sendConf.ConfRateAvgThreshold, avgMode)
@@ -182,7 +182,7 @@ func (ac *AccCtrl) Get(userID string) (*AccountTuple, error) {
 }
 
 func (ac *AccCtrl) storeHistory(userID string, accID string, bndl bundle.Bundle, ty models.HistoryItemType) error {
-	depAddrs, err := ac.Store.GetDepositRequests(accID)
+	depAddrs, err := ac.Store.GetDepositAddresses(accID)
 	if err != nil {
 		return err
 	}

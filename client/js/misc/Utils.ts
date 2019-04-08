@@ -97,8 +97,9 @@ export function validMagnetLink(link: string): boolean {
 
         let paddedExpectedAmount: Int8Array = null;
         let expectedAmount = url.searchParams.get(LinkKeys.ExpectedAmount);
+        let expectedAmountInt;
         if (expectedAmount) {
-            let expectedAmountInt = parseInt(expectedAmount);
+            expectedAmountInt = parseInt(expectedAmount);
             if (!expectedAmountInt && expectedAmountInt !== 0) {
                 console.error("expected amount is not a number");
                 return false;
@@ -114,6 +115,10 @@ export function validMagnetLink(link: string): boolean {
         if (!multiUse || multiUse === 'false' || multiUse === '0') {
             multiUseTrits[0] = 0;
         } else {
+            // multi use and expected amount are mutually exclusive
+            if(expectedAmountInt){
+                return false;
+            }
             multiUseTrits[0] = 1;
         }
 

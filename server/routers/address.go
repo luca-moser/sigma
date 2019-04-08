@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"fmt"
 	"github.com/iotaledger/iota.go/account/deposit"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -56,19 +55,19 @@ func (router *AddressStreamRouter) Init() {
 			return err
 		}
 
-		depReqs, err := router.AccCtrl.Store.GetDepositRequests(tuple.Account.ID())
+		depReqs, err := router.AccCtrl.Store.GetDepositAddresses(tuple.Account.ID())
 		if err != nil {
 			return err
 		}
 
-		addrs := make([]deposit.Conditions, len(depReqs))
+		addrs := make([]deposit.CDA, len(depReqs))
 		var addrsIndex int
 		for keyIndex, req := range depReqs {
 			addr, err := tuple.Settings.AddrGen(keyIndex, req.SecurityLevel, true)
 			if err != nil {
 				return err
 			}
-			addrs[addrsIndex] = deposit.Conditions{Address: addr, Request: deposit.Request{
+			addrs[addrsIndex] = deposit.CDA{Address: addr, Conditions: deposit.Conditions{
 				ExpectedAmount: req.ExpectedAmount,
 				MultiUse:       req.MultiUse,
 				TimeoutAt:      req.TimeoutAt,
@@ -91,28 +90,28 @@ func (router *AddressStreamRouter) Init() {
 			case NewAddress:
 
 				expectedAmount := uint64(m.Data.(float64))
-				fmt.Println(expectedAmount)
 				now, err := router.AccCtrl.TimeSource.Time()
 				if err != nil {
 					// TODO: send down error
 					break
 				}
 				thirdyMinutes := now.Add(time.Duration(30) * time.Minute)
-				req := &deposit.Request{TimeoutAt: &thirdyMinutes, MultiUse: true}
+				conds := &deposit.Conditions{TimeoutAt: &thirdyMinutes, MultiUse: true}
 				if expectedAmount != 0 {
-					req.ExpectedAmount = &expectedAmount
+					conds.ExpectedAmount = &expectedAmount
+					conds.MultiUse = false
 				}
-				conds, err := tuple.Account.AllocateDepositRequest(req)
+				cda, err := tuple.Account.AllocateDepositAddress(conds)
 				if err != nil {
 					// TODO: send down error
 					break
 				}
-				link, err := conds.AsMagnetLink()
+				link, err := cda.AsMagnetLink()
 				if err != nil {
 					// TODO: send down error
 					break
 				}
-				data := &newaddress{conds, link}
+				data := &newaddress{cda, link}
 				if err := ws.WriteJSON(&msg{Type: byte(AddressAdd), Data: data}); err != nil {
 					return err
 				}
